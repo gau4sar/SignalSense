@@ -12,8 +12,11 @@ import cz.mroczis.netmonster.core.model.cell.CellNr
 import cz.mroczis.netmonster.core.model.cell.ICell
 
 data class ICellWithNetworkType(
-    val iCell: ICell,
-    val alphaLong: String?, val networkType: NetworkType
+    val cellLte: CellLte,
+    val alphaLong: String?,
+    val networkType: NetworkType,
+    val ratType: String,
+    val _5gSignals: CellNr? = null
 )
 
 data class ActiveSignalStrength(
@@ -44,7 +47,7 @@ class NetMonsterHelper(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun getCellList(
         registeredCellsIdWithAlphaLong: MutableList<RegisteredCellIdWithAlphaLong>,
-        signalStrength: SignalStrength
+        activeSignalStrength: ActiveSignalStrength
     ) {
 
 
@@ -52,14 +55,19 @@ class NetMonsterHelper(private val context: Context) {
         val cellList = NetMonsterFactory.get(context).getCells()
 
         Log.d("signalsense", "cellList size -> " + cellList.size)
+        Log.d("signalsense", "NetMonsterFactory cellList" + cellList)
 
         val registeredCellIds = registeredCellsIdWithAlphaLong.map { it.cellId }
 
 
-        // Filter cells
+        // Filter LTE cells
         val filteredLTECellsWithCellId = cellList.filterIsInstance<CellLte>().filter { cell ->
             cell.pci in registeredCellIds
         }
+        Log.d(
+            "signalsense",
+            "NetMonsterFactory filteredLTECellsWithCellId" + filteredLTECellsWithCellId
+        )
 
         val uniqueLTECells = filteredLTECellsWithCellId
             .groupBy { it.pci } // Group cells by cell ID
@@ -78,100 +86,131 @@ class NetMonsterHelper(private val context: Context) {
                 sortedCells.first()
             }
 
-        val iCellLTEWithNetworkTypes = uniqueLTECells.map { iCell ->
-            ICellWithNetworkType(
-                iCell = iCell,
-                alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == iCell.pci }?.alphaLong,
-                NetMonsterFactory.get(context).getNetworkType(iCell.subscriptionId)
-            )
-        }
-
 
         // Filter NR cells
         val filteredNrCells = cellList.filterIsInstance<CellNr>().filter { cell ->
             cell.pci in registeredCellIds
+        }.toMutableList()
+
+
+        val uniqueNrCells = filteredNrCells
+            .groupBy { it.pci } // Group cells by cell ID
+            .map { (_, cellList) ->
+                // Sort cells in each group by the count of null values in signal and enb properties
+                val sortedCells = cellList.sortedBy { cell ->
+                    val nullValues = listOf(
+                        cell.signal.ssRsrp,
+                        cell.signal.ssRsrq,
+                        cell.signal.ssSinr,
+                    ).count { it == null }
+                    nullValues
+                }
+                // Choose the first cell from the sorted list (fewest null values)
+                sortedCells.first()
+            }.toMutableList()
+
+
+        val finalAddedCells = mutableListOf<ICellWithNetworkType>()
+
+        for (lteCell in uniqueLTECells) {
+            var iCellWithNetworkType: ICellWithNetworkType? = null
+
+            val matchingNSaCell = uniqueNrCells.find {
+                it.pci == lteCell.pci
+            }
+
+            val networkType =
+                NetMonsterFactory.get(context).getNetworkType(lteCell.subscriptionId)
+
+
+            /*Log.d(
+                "signalsense",
+                "NetMonsterFactory networkType" + networkType
+            )*/
+
+
+            if (matchingNSaCell != null) {
+
+                if (matchingNSaCell.signal.ssRsrp == null || matchingNSaCell.signal.ssRsrq == null || matchingNSaCell.signal.ssSinr == null) {
+
+                    iCellWithNetworkType = ICellWithNetworkType(
+                        cellLte = lteCell,
+                        networkType = networkType,
+                        alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
+                        ratType = getRatType(networkType)
+                    )
+                } else {
+
+                    // Remove the matching NSA cell
+                    uniqueNrCells.remove(matchingNSaCell)
+
+                    iCellWithNetworkType = ICellWithNetworkType(
+                        cellLte = lteCell,
+                        networkType = networkType,
+                        alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
+                        ratType = RatType._5G_NSA.value,
+                        _5gSignals = matchingNSaCell
+                    )
+                }
+            } else {
+                iCellWithNetworkType = ICellWithNetworkType(
+                    cellLte = lteCell,
+                    networkType = networkType,
+                    alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
+                    ratType = getRatType(networkType)
+                )
+            }
+
+            finalAddedCells.add(iCellWithNetworkType)
         }
 
-        // Initialize the ratTypeString
+        Log.d("signalsense", "NetMonsterFactory filteredNrCells" + filteredNrCells)
+
+
+        // Initialize the ratTypeList
+        val ratTypeList = mutableListOf<String>()
+
+        finalAddedCells.map {
+            ratTypeList += it.ratType
+        }
+
         var ratTypeString = ""
 
-        // Check if there are filtered NR cells with NSA
-        val hasNSA = filteredNrCells.any { cellNr ->
-            NetMonsterFactory.get(context).getNetworkType(cellNr.subscriptionId) is NetworkType.Nr.Nsa
+        if (filteredLTECellsWithCellId.isEmpty() && filteredNrCells.isEmpty()) {
+            ratTypeList.clear()
+        } else {
+            ratTypeString = ratTypeList.distinct().joinToString(", ")
         }
 
-        // Check if there are filtered NR cells with SA
-        val hasSA = filteredNrCells.any { cellNr ->
-            NetMonsterFactory.get(context).getNetworkType(cellNr.subscriptionId) is NetworkType.Nr.Sa
-        }
-
-        
-        
-        // remove nsa from list
-        val filteredNrCellsWithOnlySa = filteredNrCells.filter {cellNr ->
-            NetMonsterFactory.get(context).getNetworkType(cellNr.subscriptionId) is NetworkType.Nr.Sa
-        }
-        
-
-        val iCellSAWithNetworkType = filteredNrCellsWithOnlySa.map { iCell ->
-            ICellWithNetworkType(
-                iCell = iCell,
-                alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == iCell.pci }?.alphaLong,
-                NetMonsterFactory.get(context).getNetworkType(iCell.subscriptionId)
-            )
-        }
-
-
-        // Combine filtered LTE and NR cells
-        val filteredCells = iCellLTEWithNetworkTypes + iCellSAWithNetworkType
-
-        Log.d(
-            "signalsense",
-            "cellList size-> " + cellList.size + " filteredCells->" + filteredLTECellsWithCellId.size
-        )
-
-
-        if (hasNSA) {
-            if (ratTypeString.isNotEmpty()) {
-                ratTypeString += ", "
-            }
-            ratTypeString += "5G NSA"
-        }
-
-        if(!hasNSA) {
-            // Check if there are filtered NR cells with NSA
-            val hasLteWithNSA = filteredLTECellsWithCellId.any { cellLte ->
-                NetMonsterFactory.get(context)
-                    .getNetworkType(cellLte.subscriptionId) is NetworkType.Nr.Nsa
-            }
-
-            // Add "NSA" to ratTypeString if it's not already present
-            if (hasLteWithNSA) {
-                Log.d("signalsense","hasLteWithNSA -> "+hasLteWithNSA)
-                if (ratTypeString.isNotEmpty()) {
-                    ratTypeString += ", "
-                }
-                ratTypeString += "5G NSA"
-            }
-            else{
-                if (ratTypeString.isNotEmpty()) {
-                    ratTypeString += ", "
-                }
-                ratTypeString += "LTE"
-            }
-        }
-
-        if (hasSA) {
-            if (ratTypeString.isNotEmpty()) {
-                ratTypeString += ", "
-            }
-            ratTypeString += "SA"
-        }
-
-        if(filteredLTECellsWithCellId.isEmpty() && filteredNrCells.isEmpty()){
-            ratTypeString = ""
-        }
-
-        callback?.getCellList(filteredCells, ratTypeString)
+        callback?.getCellList(finalAddedCells, ratTypeString)
     }
+
+    private fun getRatType(networkType: NetworkType): String {
+        return when (networkType) {
+            is NetworkType.Nr.Nsa -> {
+                RatType._5G_NSA.value
+            }
+
+            is NetworkType.Lte -> {
+                RatType.LTE.value
+            }
+
+            is NetworkType.Nr.Sa -> {
+                RatType._5G_SA.value
+            }
+
+            else -> {
+                RatType.N_A.value
+            }
+        }
+    }
+
+
+    enum class RatType(val value: String) {
+        LTE("LTE"),
+        _5G_NSA("5G NSA"), // Note: Using underscore for the enum variant with spaces
+        _5G_SA("5G SA"),
+        N_A("N/A"); // Default value if not recognized
+    }
+
 }

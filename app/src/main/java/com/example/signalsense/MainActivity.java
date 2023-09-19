@@ -295,7 +295,7 @@ public class MainActivity extends ComponentActivity {
             });
 
             // Request network information
-            netMonsterHelper.getCellList(registeredCellIdWithAlphaLongList,defaultSignalStrength);
+            netMonsterHelper.getCellList(registeredCellIdWithAlphaLongList,activeSignalStrength);
 
         } else {
             Toast.makeText(this, "Telephone manager not initialized", Toast.LENGTH_LONG).show();

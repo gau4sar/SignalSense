@@ -1,7 +1,5 @@
 package com.example.signalsense;
 
-import android.telephony.CellSignalStrengthNr;
-import android.telephony.SignalStrength;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import cz.mroczis.netmonster.core.db.model.NetworkType;
@@ -45,24 +45,23 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
         ICellWithNetworkType iCellWithNetworkType = cellInfoList.get(position);
 
 
-        ICell iCell = iCellWithNetworkType.getICell();
-
         // Get the current time in milliseconds
         long currentMilliseconds = System.currentTimeMillis();
 
+        holder.populateCellData(iCellWithNetworkType, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
 
-        if (iCell instanceof CellLte) {
-            CellLte cellInfoLte = (CellLte) iCell;
+
+/*
+        if (iCell instanceof CellLte cellInfoLte) {
 
             // Populate TextViews with LTE cell data
-            holder.populateLteData(cellInfoLte, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
-        } else if (iCell instanceof CellNr) {
-            CellNr cellInfoLte = (CellNr) iCell;
+            holder.populateCellData(cellInfoLte, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
+        } else if (iCell instanceof CellNr cellInfoLte) {
 
             // Populate TextViews with NR cell data
             holder.populateNrData(cellInfoLte, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
 
-        }
+        }*/
     }
 
     @Override
@@ -116,27 +115,74 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
             strengthValuesFor5g = itemView.findViewById(R.id.ll_5g_strength_values);
         }
 
-        public void populateLteData(CellLte cellLte, String alphaLong, NetworkType networkType, long currentMilliseconds) {
+        public void populateCellData(ICellWithNetworkType iCellWithNetworkType, String alphaLong, NetworkType networkType, long currentMilliseconds) {
 
-            Log.d("Signalsense","populateLteData NetworkType"+networkType);
+            Log.d("Signalsense", "populateCellData NetworkType" + networkType);
+            Log.d("Signalsense", "populateCellData activeSignalStrength" + activeSignalStrength);
 
+            CellLte cellLte = iCellWithNetworkType.getCellLte();
+            CellNr _5gSignalsCellNr = iCellWithNetworkType.get_5gSignals();
 
-            if (networkType instanceof NetworkType.Nr.Nsa) {
+            if (iCellWithNetworkType.getRatType().equals(NetMonsterHelper.RatType._5G_NSA.getValue())) {
 
                 strengthValuesFor5g.setVisibility(View.VISIBLE);
 
-                ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
-                ssRsrqTextView.setText(activeSignalStrength.getSsRsrq());
-                ssSinrTextView.setText(activeSignalStrength.getSsSinr());
+                if (_5gSignalsCellNr != null) {
 
-                rsrpTextView.setText( activeSignalStrength.getRsrp());
-                rsrqTextView.setText( activeSignalStrength.getRsrq());
-                snrTextView.setText(activeSignalStrength.getSnr());
+                    if (_5gSignalsCellNr.getSignal().getSsRsrp() != null) {
+                        ssRsrpTextView.setText(_5gSignalsCellNr.getSignal().getSsRsrp().toString());
 
-                networkTypeTextView.setText(alphaLong + " 4G");
+                    } else if (activeSignalStrength.getSsRsrp() != null) {
+                        ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
+                    } else {
+                        ssRsrpTextView.setText("loading");
+                    }
+
+                    if (_5gSignalsCellNr.getSignal().getSsRsrq() != null) {
+                        ssRsrqTextView.setText(_5gSignalsCellNr.getSignal().getSsRsrq().toString());
+
+                    } else if (activeSignalStrength.getSsRsrq() != null) {
+                        ssRsrqTextView.setText(activeSignalStrength.getSsRsrq());
+                    } else {
+                        ssRsrqTextView.setText("loading");
+                    }
+
+                    if (_5gSignalsCellNr.getSignal().getSsSinr() != null) {
+                        ssSinrTextView.setText(_5gSignalsCellNr.getSignal().getSsSinr().toString());
+                    } else if (activeSignalStrength.getSsSinr() != null) {
+
+                        if (Objects.equals(activeSignalStrength.getSsSinr(), "2147483647")) {
+                            ssSinrTextView.setText("N/A");
+                        } else {
+                            ssSinrTextView.setText(activeSignalStrength.getSsSinr());
+                        }
+                    } else {
+                        ssSinrTextView.setText("loading");
+                    }
+
+                } else {
+                    if (activeSignalStrength.getSsRsrp() != null) {
+                        ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
+                    }
+                    else{
+                        ssRsrpTextView.setText("loading");
+                    }
+                    if (activeSignalStrength.getSsRsrq() != null) {
+                        ssRsrqTextView.setText(activeSignalStrength.getSsRsrq());
+                    }
+                    else{
+                        ssRsrqTextView.setText("loading");
+                    }
+                    if (activeSignalStrength.getSsSinr() != null) {
+                        ssSinrTextView.setText(activeSignalStrength.getSsSinr());
+                    }
+                    else{
+                        ssSinrTextView.setText("loading");
+                    }
+                }
+
 
                 nsaCellIdTextView.setText("CellId: " + cellLte.getPci());
-
                 nsaTimestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
 
                 nsaNetworkTypeTextView.setText(alphaLong + " 5G");
@@ -144,18 +190,34 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
                 strengthValuesFor5g.setVisibility(View.GONE);
 
-                rsrpTextView.setText("" + cellLte.getSignal().getRsrp());
-                rsrqTextView.setText("" +  cellLte.getSignal().getRsrq());
-                snrTextView.setText("" + cellLte.getSignal().getSnr());
-
-                networkTypeTextView.setText(alphaLong + " 4G");
-
             }
 
-            cellIdTextView.setText("CellId: " + cellLte.getPci());
 
-            eNBTextView.setText("" +  cellLte.getEnb());
+            if (cellLte.getSignal().getRsrp() != null) {
+                rsrpTextView.setText(cellLte.getSignal().getRsrp().toString());
+            } else if (activeSignalStrength.getSsRsrp() != null) {
+                rsrpTextView.setText(activeSignalStrength.getRsrp());
+            }
+
+            if (cellLte.getSignal().getRsrq() != null) {
+                rsrqTextView.setText(cellLte.getSignal().getRsrq().toString());
+            } else if (activeSignalStrength.getSsRsrp() != null) {
+                rsrqTextView.setText(activeSignalStrength.getRsrq());
+            }
+
+            if (cellLte.getSignal().getSnr() != null) {
+                snrTextView.setText(cellLte.getSignal().getSnr().toString());
+            } else if (activeSignalStrength.getSnr() != null) {
+                snrTextView.setText(activeSignalStrength.getSnr());
+            }
+
+
+            cellIdTextView.setText("CellId: " + cellLte.getPci());
+            networkTypeTextView.setText(alphaLong + " 4G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
+
+            eNBTextView.setText("" + cellLte.getEnb());
+
 
             //networkTechnologyTextView.setText("Network technology: " + networkType);
             networkTechnologyTextView.setVisibility(View.GONE);
@@ -165,10 +227,19 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
             cellIdTextView.setText("CellId: " + cellNr.getPci());
 
-            rsrqTextView.setText("" + cellNr.getSignal().getSsRsrq());
-            rsrpTextView.setText("" + + cellNr.getSignal().getSsRsrp());
 
-            snrTextView.setText("" + + cellNr.getSignal().getSsSinr());
+            if (cellNr.getSignal().getSsRsrq() != null) {
+                rsrqTextView.setText("" + cellNr.getSignal().getSsRsrq());
+            }
+
+            if (cellNr.getSignal().getSsRsrp() != null) {
+                rsrpTextView.setText("" + +cellNr.getSignal().getSsRsrp());
+            }
+
+            if (cellNr.getSignal().getSsSinr() != null) {
+                snrTextView.setText("" + +cellNr.getSignal().getSsSinr());
+            }
+
             eNBTextView.setVisibility(View.GONE);
             networkTypeTextView.setText(alphaLong + " 5G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
