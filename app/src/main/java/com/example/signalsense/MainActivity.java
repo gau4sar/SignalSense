@@ -56,6 +56,7 @@ public class MainActivity extends ComponentActivity {
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
 
     SignalStrength defaultSignalStrength = null;
+
     ActiveSignalStrength activeSignalStrength = null;
 
     int secondsCount = 0;
@@ -105,7 +106,7 @@ public class MainActivity extends ComponentActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Pass the additional string to the adapter
-        cellInfoAdapter = new CellInfoAdapter(new ArrayList<>(),defaultSignalStrength);
+        cellInfoAdapter = new CellInfoAdapter(new ArrayList<>(),activeSignalStrength);
         recyclerView.setAdapter(cellInfoAdapter);
 
         // Check for and request permissions
@@ -146,16 +147,16 @@ public class MainActivity extends ComponentActivity {
 
                         ratTypeTextView.setText(ratTypeString);
 
-                        defaultRssiTextView.setText(defaultRssiValue);
+                        /*defaultRssiTextView.setText(defaultRssiValue);
                         defaultRsrpTextView.setText(defaultRsrpValue);
                         defaultRsrqTextView.setText(defaultRsrqValue);
                         defaultSnrTextView.setText(defaultSnrValue);
 
                         defaultSSRsrpTextView.setText(defaultSSRsrpValue);
                         defaultSSrsrqTextView.setText(defaultSSrsrqValue);
-                        defaultSSSnrTextView.setText(defaultSSSnrValue);
+                        defaultSSSnrTextView.setText(defaultSSSnrValue);*/
 
-                        cellInfoAdapter.setData(iCellWithNetworkTypeList,defaultSignalStrength);
+                        cellInfoAdapter.setData(iCellWithNetworkTypeList,activeSignalStrength);
                         cellInfoAdapter.notifyDataSetChanged();
 
                     }
@@ -197,6 +198,8 @@ public class MainActivity extends ComponentActivity {
                     defaultSSRsrpValue= String.valueOf(nrSignalStrength.getSsRsrp()); // Extract NR RSSI value
                     defaultSSrsrqValue = String.valueOf(nrSignalStrength.getSsRsrq()); // Extract NR
                     defaultSSSnrValue = String.valueOf(nrSignalStrength.getSsSinr()); // Extract NR RSSI value
+
+                    Log.d("SignalSenseLog", "defaultSSrsrqValue-> " + defaultSSrsrqValue);
                 }
                 else if (cellSignalStrength instanceof CellSignalStrengthLte lteSignalStrength) {
 
@@ -207,6 +210,9 @@ public class MainActivity extends ComponentActivity {
 
                 }
             }
+
+
+            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue,defaultRsrpValue,defaultRsrqValue,defaultSnrValue,defaultSSRsrpValue,defaultSSrsrqValue,defaultSSSnrValue);
 
 
             List<CellInfo> registeredCells = new ArrayList<>();

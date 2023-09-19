@@ -1,9 +1,12 @@
 package com.example.signalsense;
 
+import android.telephony.CellSignalStrengthNr;
 import android.telephony.SignalStrength;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -21,12 +24,12 @@ import cz.mroczis.netmonster.core.model.cell.ICell;
 
 public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellInfoViewHolder> {
 
-    SignalStrength activeSignalStrength ;
+    static ActiveSignalStrength activeSignalStrength;
     private List<ICellWithNetworkType> cellInfoList;
 
-    public CellInfoAdapter(List<ICellWithNetworkType> cellInfoList,SignalStrength activeSignalStrength) {
+    public CellInfoAdapter(List<ICellWithNetworkType> cellInfoList, ActiveSignalStrength activeSignalStrength) {
         this.cellInfoList = cellInfoList;
-        this.activeSignalStrength =activeSignalStrength;
+        this.activeSignalStrength = activeSignalStrength;
     }
 
     @NonNull
@@ -40,7 +43,6 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
     @Override
     public void onBindViewHolder(@NonNull CellInfoViewHolder holder, int position) {
         ICellWithNetworkType iCellWithNetworkType = cellInfoList.get(position);
-
 
 
         ICell iCell = iCellWithNetworkType.getICell();
@@ -68,56 +70,105 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
         return cellInfoList.size();
     }
 
-    public void setData(List<ICellWithNetworkType> cellInfoList,SignalStrength activeSignalStrength) {
+    public void setData(List<ICellWithNetworkType> cellInfoList, ActiveSignalStrength activeSignalStrength) {
         this.cellInfoList = cellInfoList;
-        this.activeSignalStrength =activeSignalStrength;
+        this.activeSignalStrength = activeSignalStrength;
     }
 
     static class CellInfoViewHolder extends RecyclerView.ViewHolder {
         TextView rsrqTextView;
         TextView rsrpTextView;
-        TextView sinrTextView;
+        TextView snrTextView;
+
+        TextView ssRsrqTextView;
+        TextView ssRsrpTextView;
+        TextView ssSinrTextView;
+
         TextView eNBTextView;
         TextView networkTypeTextView;
+        TextView nsaNetworkTypeTextView;
         TextView cellIdTextView;
         TextView networkTechnologyTextView;
         TextView timestampTextView;
+        TextView nsaCellIdTextView;
+        TextView nsaTimestampTextView;
+        LinearLayout strengthValuesFor5g;
 
         public CellInfoViewHolder(@NonNull View itemView) {
             super(itemView);
             rsrqTextView = itemView.findViewById(R.id.tv_rsrq);
             rsrpTextView = itemView.findViewById(R.id.tv_rsrp);
-            sinrTextView = itemView.findViewById(R.id.tv_sinr);
+            snrTextView = itemView.findViewById(R.id.tv_snr);
+
+            ssRsrqTextView = itemView.findViewById(R.id.tv_ssrsrq);
+            ssRsrpTextView = itemView.findViewById(R.id.tv_ssrsrp);
+            ssSinrTextView = itemView.findViewById(R.id.tv_sssinr);
+            nsaCellIdTextView = itemView.findViewById(R.id.tv_nsa_cellId);
+            nsaTimestampTextView = itemView.findViewById(R.id.tv_nsa_timestamp);
+            nsaNetworkTypeTextView = itemView.findViewById(R.id.tv_networkType_nsa);
+
             eNBTextView = itemView.findViewById(R.id.tv_enb);
             networkTypeTextView = itemView.findViewById(R.id.tv_networkType);
             networkTechnologyTextView = itemView.findViewById(R.id.tv_network_technology);
             cellIdTextView = itemView.findViewById(R.id.tv_cellId);
             timestampTextView = itemView.findViewById(R.id.tv_timestamp);
+
+            strengthValuesFor5g = itemView.findViewById(R.id.ll_5g_strength_values);
         }
 
         public void populateLteData(CellLte cellLte, String alphaLong, NetworkType networkType, long currentMilliseconds) {
+
+            Log.d("Signalsense","populateLteData NetworkType"+networkType);
+
+
+            if (networkType instanceof NetworkType.Nr.Nsa) {
+
+                strengthValuesFor5g.setVisibility(View.VISIBLE);
+
+                ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
+                ssRsrqTextView.setText(activeSignalStrength.getSsRsrq());
+                ssSinrTextView.setText(activeSignalStrength.getSsSinr());
+
+                rsrpTextView.setText( activeSignalStrength.getRsrp());
+                rsrqTextView.setText( activeSignalStrength.getRsrq());
+                snrTextView.setText(activeSignalStrength.getSnr());
+
+                networkTypeTextView.setText(alphaLong + " 4G");
+
+                nsaCellIdTextView.setText("CellId: " + cellLte.getPci());
+
+                nsaTimestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
+
+                nsaNetworkTypeTextView.setText(alphaLong + " 5G");
+            } else {
+
+                strengthValuesFor5g.setVisibility(View.GONE);
+
+                rsrpTextView.setText("" + cellLte.getSignal().getRsrp());
+                rsrqTextView.setText("" +  cellLte.getSignal().getRsrq());
+                snrTextView.setText("" + cellLte.getSignal().getSnr());
+
+                networkTypeTextView.setText(alphaLong + " 4G");
+
+            }
+
             cellIdTextView.setText("CellId: " + cellLte.getPci());
 
-            rsrqTextView.setText("RSRQ: " + cellLte.getSignal().getRsrq());
-            rsrpTextView.setText("RSRP: " + cellLte.getSignal().getRsrp());
-            sinrTextView.setText("SNR: " + cellLte.getSignal().getSnr());
-            eNBTextView.setText("eNB: " + cellLte.getEnb());
-            networkTypeTextView.setText(alphaLong + " 4G");
+            eNBTextView.setText("" +  cellLte.getEnb());
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
+
             //networkTechnologyTextView.setText("Network technology: " + networkType);
             networkTechnologyTextView.setVisibility(View.GONE);
         }
 
         public void populateNrData(CellNr cellNr, String alphaLong, NetworkType networkType, long currentMilliseconds) {
 
-            activeSignalStrength
-
             cellIdTextView.setText("CellId: " + cellNr.getPci());
 
-            rsrqTextView.setText("RSRQ: " + cellNr.getSignal().getSsRsrq());
-            rsrpTextView.setText("RSRP: " + cellNr.getSignal().getSsRsrp());
+            rsrqTextView.setText("" + cellNr.getSignal().getSsRsrq());
+            rsrpTextView.setText("" + + cellNr.getSignal().getSsRsrp());
 
-            sinrTextView.setText("SINR: " + cellNr.getSignal().getSsSinr());
+            snrTextView.setText("" + + cellNr.getSignal().getSsSinr());
             eNBTextView.setVisibility(View.GONE);
             networkTypeTextView.setText(alphaLong + " 5G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));

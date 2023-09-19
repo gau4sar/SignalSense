@@ -56,13 +56,12 @@ class NetMonsterHelper(private val context: Context) {
         val registeredCellIds = registeredCellsIdWithAlphaLong.map { it.cellId }
 
 
-        // Filter LTE cells
-        val filteredLteCells = cellList.filterIsInstance<CellLte>().filter { cell ->
+        // Filter cells
+        val filteredLTECellsWithCellId = cellList.filterIsInstance<CellLte>().filter { cell ->
             cell.pci in registeredCellIds
         }
 
-        // Filter LTE cells and keep only unique cell IDs
-        val uniqueLteCells = filteredLteCells
+        val uniqueLTECells = filteredLTECellsWithCellId
             .groupBy { it.pci } // Group cells by cell ID
             .map { (_, cellList) ->
                 // Sort cells in each group by the count of null values in signal and enb properties
@@ -79,7 +78,7 @@ class NetMonsterHelper(private val context: Context) {
                 sortedCells.first()
             }
 
-        val iCellWithNetworkTypeLTE = uniqueLteCells.map { iCell ->
+        val iCellLTEWithNetworkTypes = uniqueLTECells.map { iCell ->
             ICellWithNetworkType(
                 iCell = iCell,
                 alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == iCell.pci }?.alphaLong,
@@ -106,11 +105,15 @@ class NetMonsterHelper(private val context: Context) {
             NetMonsterFactory.get(context).getNetworkType(cellNr.subscriptionId) is NetworkType.Nr.Sa
         }
 
+        
+        
+        // remove nsa from list
         val filteredNrCellsWithOnlySa = filteredNrCells.filter {cellNr ->
             NetMonsterFactory.get(context).getNetworkType(cellNr.subscriptionId) is NetworkType.Nr.Sa
         }
+        
 
-        val iCellWithNetworkTypeNR = filteredNrCellsWithOnlySa.map { iCell ->
+        val iCellSAWithNetworkType = filteredNrCellsWithOnlySa.map { iCell ->
             ICellWithNetworkType(
                 iCell = iCell,
                 alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == iCell.pci }?.alphaLong,
@@ -120,27 +123,24 @@ class NetMonsterHelper(private val context: Context) {
 
 
         // Combine filtered LTE and NR cells
-        val filteredCells = iCellWithNetworkTypeLTE + iCellWithNetworkTypeNR
+        val filteredCells = iCellLTEWithNetworkTypes + iCellSAWithNetworkType
 
         Log.d(
             "signalsense",
-            "cellList size-> " + cellList.size + " filteredCells->" + filteredLteCells.size
+            "cellList size-> " + cellList.size + " filteredCells->" + filteredLTECellsWithCellId.size
         )
 
-
-        if (filteredLteCells.isNotEmpty()) {
-            ratTypeString += "LTE"
-        }
 
         if (hasNSA) {
             if (ratTypeString.isNotEmpty()) {
                 ratTypeString += ", "
             }
-            ratTypeString += "NSA"
+            ratTypeString += "5G NSA"
         }
-        else {
+
+        if(!hasNSA) {
             // Check if there are filtered NR cells with NSA
-            val hasLteWithNSA = filteredLteCells.any { cellLte ->
+            val hasLteWithNSA = filteredLTECellsWithCellId.any { cellLte ->
                 NetMonsterFactory.get(context)
                     .getNetworkType(cellLte.subscriptionId) is NetworkType.Nr.Nsa
             }
@@ -151,7 +151,13 @@ class NetMonsterHelper(private val context: Context) {
                 if (ratTypeString.isNotEmpty()) {
                     ratTypeString += ", "
                 }
-                ratTypeString += "NSA"
+                ratTypeString += "5G NSA"
+            }
+            else{
+                if (ratTypeString.isNotEmpty()) {
+                    ratTypeString += ", "
+                }
+                ratTypeString += "LTE"
             }
         }
 
@@ -162,6 +168,9 @@ class NetMonsterHelper(private val context: Context) {
             ratTypeString += "SA"
         }
 
+        if(filteredLTECellsWithCellId.isEmpty() && filteredNrCells.isEmpty()){
+            ratTypeString = ""
+        }
 
         callback?.getCellList(filteredCells, ratTypeString)
     }
