@@ -8,6 +8,7 @@ import cz.mroczis.netmonster.core.factory.NetMonsterFactory
 import cz.mroczis.netmonster.core.model.cell.CellLte
 import cz.mroczis.netmonster.core.model.cell.CellNr
 
+// Data class representing cell information with network type
 data class ICellWithNetworkType(
     val cellLte: CellLte,
     val alphaLong: String?,
@@ -16,6 +17,7 @@ data class ICellWithNetworkType(
     val _5gSignals: CellNr? = null
 )
 
+// Data class representing active signal strength
 data class ActiveSignalStrength(
     val rssi: String?,
     val rsrp: String?,
@@ -26,15 +28,18 @@ data class ActiveSignalStrength(
     val ssSinr: String?,
 )
 
+// Data class representing registered cell ID with operator name
 data class RegisteredCellIdWithAlphaLong(val cellId: Int, val alphaLong: String)
 
+// Helper class for collecting network information using NetMonster library
 class NetMonsterHelper(private val context: Context) {
 
-    // Callback interface
+    // Callback interface for network information
     interface NetworkInfoCallback {
         fun getCellList(cellList: List<ICellWithNetworkType>, ratTypes: String)
     }
 
+    // Set the callback for network information
     private var callback: NetworkInfoCallback? = null
 
     fun setCallback(callback: NetworkInfoCallback) {
@@ -47,11 +52,9 @@ class NetMonsterHelper(private val context: Context) {
         activeSignalStrength: ActiveSignalStrength
     ) {
 
-
         // Use the NetMonster library to collect network information
         val cellList = NetMonsterFactory.get(context).getCells()
 
-        Log.d("signalsense", "cellList size -> " + cellList.size)
         Log.d("signalsense", "NetMonsterFactory cellList" + cellList)
 
         val registeredCellIds = registeredCellsIdWithAlphaLong.map { it.cellId }
@@ -61,11 +64,8 @@ class NetMonsterHelper(private val context: Context) {
         val filteredLTECellsWithCellId = cellList.filterIsInstance<CellLte>().filter { cell ->
             cell.pci in registeredCellIds
         }
-        Log.d(
-            "signalsense",
-            "NetMonsterFactory filteredLTECellsWithCellId" + filteredLTECellsWithCellId
-        )
 
+        // Get unique LTE cells with the fewest null values in signal properties
         val uniqueLTECells = filteredLTECellsWithCellId
             .groupBy { it.pci } // Group cells by cell ID
             .map { (_, cellList) ->
@@ -89,7 +89,7 @@ class NetMonsterHelper(private val context: Context) {
             cell.pci in registeredCellIds
         }.toMutableList()
 
-
+        // Get unique NR cells with the fewest null values in signal properties
         val uniqueNrCells = filteredNrCells
             .groupBy { it.pci } // Group cells by cell ID
             .map { (_, cellList) ->
@@ -105,12 +105,6 @@ class NetMonsterHelper(private val context: Context) {
                 // Choose the first cell from the sorted list (fewest null values)
                 sortedCells.first()
             }.toMutableList()
-
-
-        Log.d(
-            "signalsense",
-            "uniqueNrCells uniqueNrCells" + uniqueNrCells
-        )
 
 
         val finalAddedCells = mutableListOf<ICellWithNetworkType>()
@@ -134,8 +128,6 @@ class NetMonsterHelper(private val context: Context) {
                 "NetMonsterFactory ratType" + ratType
             )
 
-
-            ratType = RatType.LTE.value
 
             if (ratType == RatType._5G_NSA.value) {
                 if (activeSignalStrength.ssRsrp == null && activeSignalStrength.ssRsrq == null && activeSignalStrength.ssSinr == null) {
@@ -186,8 +178,6 @@ class NetMonsterHelper(private val context: Context) {
             finalAddedCells.add(iCellWithNetworkType)
         }
 
-        Log.d("signalsense", "NetMonsterFactory filteredNrCells" + filteredNrCells)
-
 
         // Initialize the ratTypeList
         val ratTypeList = mutableListOf<String>()
@@ -210,6 +200,7 @@ class NetMonsterHelper(private val context: Context) {
         callback?.getCellList(finalAddedCells, ratTypeString)
     }
 
+    // Get RAT type based on NetworkType
     private fun getRatType(networkType: NetworkType): String {
         return when (networkType) {
             is NetworkType.Nr.Nsa -> {
@@ -231,11 +222,11 @@ class NetMonsterHelper(private val context: Context) {
     }
 
 
+    // Enumeration representing RAT types
     enum class RatType(val value: String) {
         LTE("LTE"),
-        _5G_NSA("5G NSA"), // Note: Using underscore for the enum variant with spaces
+        _5G_NSA("5G NSA"),
         _5G_SA("5G SA"),
         N_A("N/A"); // Default value if not recognized
     }
-
 }

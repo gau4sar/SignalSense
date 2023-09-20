@@ -52,40 +52,19 @@ import cz.mroczis.netmonster.core.model.cell.ICell;
 public class MainActivity extends ComponentActivity {
 
     private Timer timer;
-
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
-
-    SignalStrength defaultSignalStrength = null;
-
-    ActiveSignalStrength activeSignalStrength = null;
-
-    int secondsCount = 0;
+    private ActiveSignalStrength activeSignalStrength = null;
+    private int secondsCount = 0;
     private boolean isGpsDialogOpen = false;
     private static final long PERIOD_MILLIS = 1000; // 1 second
 
-    private RecyclerView recyclerView;
     private CellInfoAdapter cellInfoAdapter;
 
-    private MutableLiveData<Integer> rsrqLiveData = new MutableLiveData<>();
+    // UI TextViews
+    private TextView ratTypeTextView;
 
-    TextView ratTypeTextView;
-    TextView defaultRssiTextView;
-    TextView defaultRsrpTextView;
-    TextView defaultRsrqTextView;
-    TextView defaultSnrTextView;
-    TextView defaultSSRsrpTextView;
-    TextView defaultSSrsrqTextView;
-    TextView defaultSSSnrTextView;
-
-    String defaultRssiValue;
-    String defaultRsrpValue;
-    String defaultRsrqValue;
-    String defaultSnrValue;
-    String defaultSSRsrpValue;
-    String defaultSSrsrqValue;
-    String defaultSSSnrValue;
-
-    String ratTypeString = "";
+    // String representing the Radio Access Technology (RAT) type
+    private String ratTypeString = "";
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -93,19 +72,12 @@ public class MainActivity extends ComponentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize UI TextViews
         ratTypeTextView = findViewById(R.id.tv_rat_type);
-        defaultRssiTextView = findViewById(R.id.tv_default_rssi);
-        defaultRsrpTextView = findViewById(R.id.tv_default_rsrp);
-        defaultRsrqTextView = findViewById(R.id.tv_default_rsrq);
-        defaultSnrTextView = findViewById(R.id.tv_default_snr);
-        defaultSSRsrpTextView = findViewById(R.id.tv_default_ssrsrp);
-        defaultSSrsrqTextView = findViewById(R.id.tv_default_ssrsrq);
-        defaultSSSnrTextView = findViewById(R.id.tv_default_sssnr);
 
-        recyclerView = findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Pass the additional string to the adapter
         cellInfoAdapter = new CellInfoAdapter(new ArrayList<>(),activeSignalStrength);
         recyclerView.setAdapter(cellInfoAdapter);
 
@@ -114,10 +86,12 @@ public class MainActivity extends ComponentActivity {
 
         checkIfGpsEnabled();
 
-        // Register the BroadcastReceiver
+        // Register the BroadcastReceiver for GPS status changes
         registerReceiver(gpsStatusReceiver, new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
     }
 
+
+    // Periodically run tasks
     private void runEvery1Second() {
 
         Log.d("SignalSenseLog", "runEvery1Second 1 ");
@@ -135,26 +109,14 @@ public class MainActivity extends ComponentActivity {
                 // Replace with your logic
                 populateCellList();
 
-                // Place your code to be executed every 1 second here
-                // This code runs on the UI thread and can safely update UI elements
+                // Update UI elements
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
 
-                        Log.d("SignalSenseLog", "runEvery1Second 3");
-
                         Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
 
                         ratTypeTextView.setText(ratTypeString);
-
-                        /*defaultRssiTextView.setText(defaultRssiValue);
-                        defaultRsrpTextView.setText(defaultRsrpValue);
-                        defaultRsrqTextView.setText(defaultRsrqValue);
-                        defaultSnrTextView.setText(defaultSnrValue);
-
-                        defaultSSRsrpTextView.setText(defaultSSRsrpValue);
-                        defaultSSrsrqTextView.setText(defaultSSrsrqValue);
-                        defaultSSSnrTextView.setText(defaultSSSnrValue);*/
 
                         cellInfoAdapter.setData(iCellWithNetworkTypeList,activeSignalStrength);
                         cellInfoAdapter.notifyDataSetChanged();
@@ -165,6 +127,8 @@ public class MainActivity extends ComponentActivity {
         }, 0, PERIOD_MILLIS); // Schedule task every 1 second
     }
 
+
+    // This method is used to gather information about the cell network.
     private void populateCellList() {
 
 
@@ -174,108 +138,104 @@ public class MainActivity extends ComponentActivity {
 
         Log.d("SignalSenseLog", "Code requires both permissions");
 
+        // Get the TelephonyManager service to access cell network information.
         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
         List<CellInfo> cellInfoList = null;
 
+        // Check if TelephonyManager is available.
         if (telephonyManager != null) {
             cellInfoList = telephonyManager.getAllCellInfo();
 
 
-            defaultSignalStrength = telephonyManager.getSignalStrength();
-
+            SignalStrength defaultSignalStrength = telephonyManager.getSignalStrength();
 
 
             Log.d("SignalSenseLog", "signalStrength-> t " + defaultSignalStrength);
 
-
+            // Retrieve the default signal strength.
             List<CellSignalStrength> signalStrengthList = defaultSignalStrength.getCellSignalStrengths();
 
-            defaultSSRsrpValue = null;
-            defaultSSrsrqValue = null;
-            defaultSSSnrValue  = null;
+            // Initialize variables to store signal strength values.
+            String defaultSSRsrpValue = null;
+            String defaultSSrsrqValue = null;
+            String defaultSSSnrValue = null;
 
-            defaultRssiValue = null;
-            defaultRsrpValue = null;
-            defaultRsrqValue = null;
-            defaultSnrValue  = null;
+            String defaultRssiValue = null;
+            String defaultRsrpValue = null;
+            String defaultRsrqValue = null;
+            String defaultSnrValue = null;
 
-
+            // Iterate through the list of signal strengths.
             for (CellSignalStrength cellSignalStrength:signalStrengthList)
             {
                 // If the signal strength is from 5G NR network
                 if (cellSignalStrength instanceof CellSignalStrengthNr nrSignalStrength) {
-                    defaultSSRsrpValue= String.valueOf(nrSignalStrength.getSsRsrp()); // Extract NR RSSI value
+                    defaultSSRsrpValue = String.valueOf(nrSignalStrength.getSsRsrp());
 
+                    // Check and handle invalid values.
                     if(defaultSSRsrpValue.equals("2147483647"))
                     {
                         Log.d("SignalSenseLog", "signalStrength-> defaultSSRsrpValue.equals(2147483647)" + defaultSSRsrpValue);
-                        defaultSSRsrpValue=null;
+                        defaultSSRsrpValue =null;
                     }
 
                     defaultSSrsrqValue = String.valueOf(nrSignalStrength.getSsRsrq()); // Extract NR
                     if(defaultSSrsrqValue.equals("2147483647"))
                     {
-                        defaultSSrsrqValue=null;
+                        defaultSSrsrqValue =null;
                     }
 
-                    defaultSSSnrValue = String.valueOf(nrSignalStrength.getSsSinr()); // Extract NR RSSI value
+                    defaultSSSnrValue = String.valueOf(nrSignalStrength.getSsSinr());
                     if(defaultSSSnrValue.equals("2147483647"))
                     {
-                        defaultSSSnrValue=null;
+                        defaultSSSnrValue =null;
                     }
 
                     Log.d("SignalSenseLog", "defaultSSrsrqValue-> " + defaultSSrsrqValue);
                 }
                 else if (cellSignalStrength instanceof CellSignalStrengthLte lteSignalStrength) {
 
-                    defaultRssiValue = String.valueOf(lteSignalStrength.getRssi()); // Extract NR RSSI value
+                    defaultRssiValue = String.valueOf(lteSignalStrength.getRssi());
+
+                    // Check and handle invalid values.
                     if(defaultRssiValue.equals("2147483647"))
                     {
-                        defaultRssiValue=null;
+                        defaultRssiValue =null;
                     }
 
-                    defaultRsrpValue = String.valueOf(lteSignalStrength.getRsrp()); // Extract NR RSSI value
+                    defaultRsrpValue = String.valueOf(lteSignalStrength.getRsrp());
                     if(defaultRsrpValue.equals("2147483647"))
                     {
-                        defaultRsrpValue=null;
+                        defaultRsrpValue =null;
                     }
 
-                    defaultRsrqValue = String.valueOf(lteSignalStrength.getRsrq()); // Extract NR RSSI value
+                    defaultRsrqValue = String.valueOf(lteSignalStrength.getRsrq());
                     if(defaultRsrqValue.equals("2147483647"))
                     {
-                        defaultRsrqValue=null;
+                        defaultRsrqValue =null;
                     }
 
-                    defaultSnrValue = String.valueOf(lteSignalStrength.getRssnr()); // Extract NR RSSI value
+                    defaultSnrValue = String.valueOf(lteSignalStrength.getRssnr());
                     if(defaultSnrValue.equals("2147483647"))
                     {
-                        defaultSnrValue=null;
+                        defaultSnrValue =null;
                     }
 
                 }
             }
 
+            // Create an instance of ActiveSignalStrength with extracted values.
+            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue, defaultRsrpValue, defaultRsrqValue, defaultSnrValue, defaultSSRsrpValue, defaultSSrsrqValue, defaultSSSnrValue);
 
-            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue,defaultRsrpValue,defaultRsrqValue,defaultSnrValue,defaultSSRsrpValue,defaultSSrsrqValue,defaultSSSnrValue);
 
-
+            // Create lists to store registered cell information.
             List<CellInfo> registeredCells = new ArrayList<>();
             List<Integer> registeredCellIds = new ArrayList<>();
             List<RegisteredCellIdWithAlphaLong> registeredCellIdWithAlphaLongList = new ArrayList<>();
 
 
             if (cellInfoList != null) {
-                Log.d("SignalSenseLog", "cellInfo != null " + cellInfoList);
-
-
-            /*for(CellLocation cellLocation : cellLocations){
-                Log.d("SignalSenseLog", "getCellLocation-> " + cellLocation);
-            }*/
-
-                if (cellInfoList.size() > 1) {
-                    Log.d("SignalSenseLog", "cellInfo last value " + cellInfoList.get(cellInfoList.size() - 1));
-                }
 
                 for (CellInfo cellInfo : cellInfoList) {
                     if (cellInfo.isRegistered()) {
@@ -284,16 +244,13 @@ public class MainActivity extends ComponentActivity {
                     }
                 }
 
-
                 Log.d("SignalSenseLog", "registeredCells -> " + registeredCells);
 
-                Log.d("SignalSenseLog", "total cellInfoList size-> " + cellInfoList.size() + "  Registered cell info size" + registeredCells.size());
-
+                // Iterate through cellInfoList to find registered cells.
                 for (CellInfo info : registeredCells) {
-                    Log.d("SignalSenseLog", "info in getCellIdentity " + info.getCellIdentity());
-
 
                     if (info instanceof CellInfoLte cellInfoLte) {
+                        // Extract LTE cell information.
                         CellSignalStrengthLte cellSignalStrength = (CellSignalStrengthLte) ((CellInfoLte) info).getCellSignalStrength();
                         CellIdentityLte cellIdentity = cellInfoLte.getCellIdentity();
                         cellSignalStrength.getRssnr();
@@ -301,7 +258,7 @@ public class MainActivity extends ComponentActivity {
                         Log.d("SignalSenseLog", "CellInfoLteTest  " + "getPci-> " + pci + " info-> " + info);
                         registeredCellIdWithAlphaLongList.add(new RegisteredCellIdWithAlphaLong(pci, (String) cellIdentity.getOperatorAlphaLong()));
                     } else if (info instanceof CellInfoNr cellInfoNr) {
-                        // Handle CellInfoNr (5G) similarly
+                        // Extract CellInfoNr (5G) cell information.
                         CellSignalStrengthNr cellSignalStrength = (CellSignalStrengthNr) ((CellInfoNr) info).getCellSignalStrength();
                         CellIdentityNr cellIdentity = (CellIdentityNr) cellInfoNr.getCellIdentity();
                         int pci = cellIdentity.getPci();
@@ -311,7 +268,6 @@ public class MainActivity extends ComponentActivity {
                     }
                 }
 
-
                 Log.d("SignalSenseLog", "registerdcellids =>  " + registeredCellIds);
             }
 
@@ -320,8 +276,7 @@ public class MainActivity extends ComponentActivity {
              * This is for the new net-monster library
              * */
 
-
-            // Create an instance of the Kotlin class
+            // Create an instance of the Kotlin class NetMonsterHelper.
             NetMonsterHelper netMonsterHelper = new NetMonsterHelper(this);
 
             // Set a callback to receive network information
@@ -329,25 +284,27 @@ public class MainActivity extends ComponentActivity {
                 @Override
                 public void getCellList(List<ICellWithNetworkType> list, String ratTypes) {
 
-
+                    // Store the received RAT (Radio Access Technology) types.
                     ratTypeString = ratTypes;
 
+                    // Store the received list of cell network information.
                     iCellWithNetworkTypeList = list;
 
                     Log.d("SignalSenseLog", "getCellList " + iCellWithNetworkTypeList);
                 }
-
             });
 
-            // Request network information
+            // Request network information from the netMonsterHelper.
             netMonsterHelper.getCellList(registeredCellIdWithAlphaLongList,activeSignalStrength);
 
         } else {
+            // Show a toast message if TelephonyManager is not initialized.
             Toast.makeText(this, "Telephone manager not initialized", Toast.LENGTH_LONG).show();
         }
     }
 
 
+    // Check and request necessary permissions
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void checkAndRequestPermissions() {
         String fineLocationPermission = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -369,6 +326,7 @@ public class MainActivity extends ComponentActivity {
         }
     }
 
+    // Handle permission request results
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -393,7 +351,7 @@ public class MainActivity extends ComponentActivity {
         }
     }
 
-    // Define a BroadcastReceiver to listen for GPS status changes
+    // BroadcastReceiver to listen for GPS status changes
     private BroadcastReceiver gpsStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -424,6 +382,7 @@ public class MainActivity extends ComponentActivity {
         }
     }
 
+    // Show a dialog to enable GPS
     private void showGpsDisabledDialog() {
         if (!isGpsDialogOpen) {
             isGpsDialogOpen = true; // Set the flag to indicate that the dialog is open

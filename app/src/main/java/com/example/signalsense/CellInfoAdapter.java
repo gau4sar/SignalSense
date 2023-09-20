@@ -50,18 +50,6 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
         holder.populateCellData(iCellWithNetworkType, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
 
-
-/*
-        if (iCell instanceof CellLte cellInfoLte) {
-
-            // Populate TextViews with LTE cell data
-            holder.populateCellData(cellInfoLte, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
-        } else if (iCell instanceof CellNr cellInfoLte) {
-
-            // Populate TextViews with NR cell data
-            holder.populateNrData(cellInfoLte, iCellWithNetworkType.getAlphaLong(), iCellWithNetworkType.getNetworkType(), currentMilliseconds);
-
-        }*/
     }
 
     @Override
@@ -117,18 +105,17 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
         public void populateCellData(ICellWithNetworkType iCellWithNetworkType, String alphaLong, NetworkType networkType, long currentMilliseconds) {
 
-            Log.d("Signalsense", "populateCellData NetworkType" + networkType);
-            Log.d("Signalsense", "populateCellData activeSignalStrength" + activeSignalStrength);
-
             CellLte cellLte = iCellWithNetworkType.getCellLte();
             CellNr _5gSignalsCellNr = iCellWithNetworkType.get_5gSignals();
 
             if (iCellWithNetworkType.getRatType().equals(NetMonsterHelper.RatType._5G_NSA.getValue())) {
 
+                // If it's a 5G NSA network, show 5g signal strength values
                 strengthValuesFor5g.setVisibility(View.VISIBLE);
 
                 if (_5gSignalsCellNr != null) {
 
+                    // Populate 5G signal strength values if available
                     if (_5gSignalsCellNr.getSignal().getSsRsrp() != null) {
                         ssRsrpTextView.setText(_5gSignalsCellNr.getSignal().getSsRsrp().toString());
 
@@ -161,6 +148,8 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                     }
 
                 } else if(activeSignalStrength.getSsRsrp() != null || activeSignalStrength.getSsRsrq() != null || activeSignalStrength.getSsSinr() != null) {
+
+                    // Populate signal strength values from the active signal if available
                     if (activeSignalStrength.getSsRsrp() != null) {
                         ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
                     }
@@ -181,6 +170,7 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                     }
                 }
                 else{
+                    // Hide strength values if no data is available
                     strengthValuesFor5g.setVisibility(View.GONE);
                 }
 
@@ -191,11 +181,12 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                 nsaNetworkTypeTextView.setText(alphaLong + " 5G");
             } else {
 
+                // Hide 5G NSA-related views
                 strengthValuesFor5g.setVisibility(View.GONE);
-
             }
 
 
+            // Populate 4G LTE cell data
             if (cellLte.getSignal().getRsrp() != null) {
                 rsrpTextView.setText(cellLte.getSignal().getRsrp().toString());
             } else if (activeSignalStrength.getSsRsrp() != null) {
@@ -215,6 +206,7 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
             }
 
 
+            // Set common cell information
             cellIdTextView.setText("CellId: " + cellLte.getPci());
             networkTypeTextView.setText(alphaLong + " 4G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
