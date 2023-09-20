@@ -2,14 +2,11 @@ package com.example.signalsense
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.telephony.CellSignalStrength
-import android.telephony.SignalStrength
 import android.util.Log
 import cz.mroczis.netmonster.core.db.model.NetworkType
 import cz.mroczis.netmonster.core.factory.NetMonsterFactory
 import cz.mroczis.netmonster.core.model.cell.CellLte
 import cz.mroczis.netmonster.core.model.cell.CellNr
-import cz.mroczis.netmonster.core.model.cell.ICell
 
 data class ICellWithNetworkType(
     val cellLte: CellLte,
@@ -110,6 +107,12 @@ class NetMonsterHelper(private val context: Context) {
             }.toMutableList()
 
 
+        Log.d(
+            "signalsense",
+            "uniqueNrCells uniqueNrCells" + uniqueNrCells
+        )
+
+
         val finalAddedCells = mutableListOf<ICellWithNetworkType>()
 
         for (lteCell in uniqueLTECells) {
@@ -119,25 +122,43 @@ class NetMonsterHelper(private val context: Context) {
                 it.pci == lteCell.pci
             }
 
+
             val networkType =
                 NetMonsterFactory.get(context).getNetworkType(lteCell.subscriptionId)
 
+            var ratType = getRatType(networkType)
 
-            /*Log.d(
+
+            Log.d(
                 "signalsense",
-                "NetMonsterFactory networkType" + networkType
-            )*/
+                "NetMonsterFactory ratType" + ratType
+            )
 
+
+            ratType = RatType.LTE.value
+
+            if (ratType == RatType._5G_NSA.value) {
+                if (activeSignalStrength.ssRsrp == null && activeSignalStrength.ssRsrq == null && activeSignalStrength.ssSinr == null) {
+                        ratType = RatType.LTE.value
+                }
+            }
+
+
+            Log.d(
+                "signalsense",
+                "NetMonsterFactory ratTypeafter" + ratType
+            )
 
             if (matchingNSaCell != null) {
 
-                if (matchingNSaCell.signal.ssRsrp == null || matchingNSaCell.signal.ssRsrq == null || matchingNSaCell.signal.ssSinr == null) {
+
+                if (matchingNSaCell.signal.ssRsrp == null && matchingNSaCell.signal.ssRsrq == null && matchingNSaCell.signal.ssSinr == null) {
 
                     iCellWithNetworkType = ICellWithNetworkType(
                         cellLte = lteCell,
                         networkType = networkType,
                         alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
-                        ratType = getRatType(networkType)
+                        ratType = ratType
                     )
                 } else {
 
@@ -153,11 +174,12 @@ class NetMonsterHelper(private val context: Context) {
                     )
                 }
             } else {
+
                 iCellWithNetworkType = ICellWithNetworkType(
                     cellLte = lteCell,
                     networkType = networkType,
                     alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
-                    ratType = getRatType(networkType)
+                    ratType = ratType
                 )
             }
 
@@ -181,6 +203,9 @@ class NetMonsterHelper(private val context: Context) {
         } else {
             ratTypeString = ratTypeList.distinct().joinToString(", ")
         }
+
+
+        Log.d("signalsense", "NetMonsterFactory finalAddedCells" + finalAddedCells)
 
         callback?.getCellList(finalAddedCells, ratTypeString)
     }

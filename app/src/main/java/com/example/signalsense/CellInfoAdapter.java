@@ -160,7 +160,7 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                         ssSinrTextView.setText("loading");
                     }
 
-                } else {
+                } else if(activeSignalStrength.getSsRsrp() != null || activeSignalStrength.getSsRsrq() != null || activeSignalStrength.getSsSinr() != null) {
                     if (activeSignalStrength.getSsRsrp() != null) {
                         ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
                     }
@@ -179,6 +179,9 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                     else{
                         ssSinrTextView.setText("loading");
                     }
+                }
+                else{
+                    strengthValuesFor5g.setVisibility(View.GONE);
                 }
 
 

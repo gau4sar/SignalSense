@@ -186,27 +186,72 @@ public class MainActivity extends ComponentActivity {
 
 
 
-            Log.d("SignalSenseLog", "signalStrength-> " + defaultSignalStrength);
+            Log.d("SignalSenseLog", "signalStrength-> t " + defaultSignalStrength);
 
 
             List<CellSignalStrength> signalStrengthList = defaultSignalStrength.getCellSignalStrengths();
+
+            defaultSSRsrpValue = null;
+            defaultSSrsrqValue = null;
+            defaultSSSnrValue  = null;
+
+            defaultRssiValue = null;
+            defaultRsrpValue = null;
+            defaultRsrqValue = null;
+            defaultSnrValue  = null;
+
 
             for (CellSignalStrength cellSignalStrength:signalStrengthList)
             {
                 // If the signal strength is from 5G NR network
                 if (cellSignalStrength instanceof CellSignalStrengthNr nrSignalStrength) {
                     defaultSSRsrpValue= String.valueOf(nrSignalStrength.getSsRsrp()); // Extract NR RSSI value
+
+                    if(defaultSSRsrpValue.equals("2147483647"))
+                    {
+                        Log.d("SignalSenseLog", "signalStrength-> defaultSSRsrpValue.equals(2147483647)" + defaultSSRsrpValue);
+                        defaultSSRsrpValue=null;
+                    }
+
                     defaultSSrsrqValue = String.valueOf(nrSignalStrength.getSsRsrq()); // Extract NR
+                    if(defaultSSrsrqValue.equals("2147483647"))
+                    {
+                        defaultSSrsrqValue=null;
+                    }
+
                     defaultSSSnrValue = String.valueOf(nrSignalStrength.getSsSinr()); // Extract NR RSSI value
+                    if(defaultSSSnrValue.equals("2147483647"))
+                    {
+                        defaultSSSnrValue=null;
+                    }
 
                     Log.d("SignalSenseLog", "defaultSSrsrqValue-> " + defaultSSrsrqValue);
                 }
                 else if (cellSignalStrength instanceof CellSignalStrengthLte lteSignalStrength) {
 
                     defaultRssiValue = String.valueOf(lteSignalStrength.getRssi()); // Extract NR RSSI value
+                    if(defaultRssiValue.equals("2147483647"))
+                    {
+                        defaultRssiValue=null;
+                    }
+
                     defaultRsrpValue = String.valueOf(lteSignalStrength.getRsrp()); // Extract NR RSSI value
+                    if(defaultRsrpValue.equals("2147483647"))
+                    {
+                        defaultRsrpValue=null;
+                    }
+
                     defaultRsrqValue = String.valueOf(lteSignalStrength.getRsrq()); // Extract NR RSSI value
+                    if(defaultRsrqValue.equals("2147483647"))
+                    {
+                        defaultRsrqValue=null;
+                    }
+
                     defaultSnrValue = String.valueOf(lteSignalStrength.getRssnr()); // Extract NR RSSI value
+                    if(defaultSnrValue.equals("2147483647"))
+                    {
+                        defaultSnrValue=null;
+                    }
 
                 }
             }
