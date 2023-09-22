@@ -1,6 +1,5 @@
-package com.example.signalsense;
+package com.example.signalsense.adapter;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,17 +9,20 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.signalsense.ActiveSignalStrength;
+import com.example.signalsense.ICellWithNetworkType;
+import com.example.signalsense.NetMonsterHelper;
+import com.example.signalsense.R;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.TimeZone;
 
 import cz.mroczis.netmonster.core.db.model.NetworkType;
 import cz.mroczis.netmonster.core.model.cell.CellLte;
 import cz.mroczis.netmonster.core.model.cell.CellNr;
-import cz.mroczis.netmonster.core.model.cell.ICell;
 
 public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellInfoViewHolder> {
 

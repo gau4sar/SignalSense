@@ -13,45 +13,45 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.provider.Settings;
-import android.telephony.CellIdentity;
 import android.telephony.CellIdentityLte;
 import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoLte;
 import android.telephony.CellInfoNr;
-import android.telephony.CellLocation;
 import android.telephony.CellSignalStrength;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthNr;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.signalsense.adapter.CellInfoAdapter;
+import com.example.signalsense.adapter.CpuFrequencyGridAdapter;
+import com.example.signalsense.data.CpuGridItem;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
-
-import cz.mroczis.netmonster.core.db.model.NetworkType;
-import cz.mroczis.netmonster.core.model.cell.ICell;
 
 
 public class MainActivity extends ComponentActivity {
 
-    private Timer timer;
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
     private ActiveSignalStrength activeSignalStrength = null;
     private int secondsCount = 0;
@@ -59,12 +59,19 @@ public class MainActivity extends ComponentActivity {
     private static final long PERIOD_MILLIS = 1000; // 1 second
 
     private CellInfoAdapter cellInfoAdapter;
+    private CpuFrequencyGridAdapter cpuFrequencyGridAdapter;
 
     // UI TextViews
     private TextView ratTypeTextView;
+    private TextView cpuUsageTextView;
+    private TextView cpuTempTextView;
+    private TextView numberOfCoresTextView;
+    private GridView cpuFrequencyRecyclerView;
 
     // String representing the Radio Access Technology (RAT) type
     private String ratTypeString = "";
+    // Initialize the executor service
+    private ScheduledExecutorService executorService;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -72,17 +79,29 @@ public class MainActivity extends ComponentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        executorService = Executors.newScheduledThreadPool(2);
+
         // Initialize UI TextViews
-        ratTypeTextView = findViewById(R.id.tv_rat_type);
-
+        cpuFrequencyRecyclerView = findViewById(R.id.gridView_cpu_frequency);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        cellInfoAdapter = new CellInfoAdapter(new ArrayList<>(),activeSignalStrength);
+        ratTypeTextView = findViewById(R.id.tv_rat_type);
+        cpuUsageTextView = findViewById(R.id.tv_cpu_usage);
+        cpuTempTextView = findViewById(R.id.tv_cpu_temp);
+        numberOfCoresTextView = findViewById(R.id.tv_number_of_cores);
+
+        cpuFrequencyGridAdapter = new CpuFrequencyGridAdapter(this, new ArrayList<>());
+        cpuFrequencyRecyclerView.setAdapter(cpuFrequencyGridAdapter);
+
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        cellInfoAdapter = new CellInfoAdapter(new ArrayList<>(), activeSignalStrength);
         recyclerView.setAdapter(cellInfoAdapter);
 
         // Check for and request permissions
         checkAndRequestPermissions();
+
+        scheduleTasks();
 
         checkIfGpsEnabled();
 
@@ -91,40 +110,60 @@ public class MainActivity extends ComponentActivity {
     }
 
 
-    // Periodically run tasks
-    private void runEvery1Second() {
+    // Schedule cell info population and CPU usage tasks
+    private void scheduleTasks() {
+        executorService.scheduleAtFixedRate(() -> {
+            // Populate cell info (replace with your logic)
+            populateCellList();
+            Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
+            // Update UI elements here
+            runOnUiThread(() -> {
+                // Update UI elements related to cell info
+                ratTypeTextView.setText(ratTypeString);
+                cellInfoAdapter.setData(iCellWithNetworkTypeList, activeSignalStrength);
+                cellInfoAdapter.notifyDataSetChanged();
+            });
+        }, 0, PERIOD_MILLIS, TimeUnit.MILLISECONDS);
 
-        Log.d("SignalSenseLog", "runEvery1Second 1 ");
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-        }
+        executorService.scheduleAtFixedRate(() -> {
 
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                Log.d("SignalSenseLog", "runEvery1Second 2");
+            // Calculate CPU usage
+            int cpuUsage = CpuInfo.getCpuUsagePercentage();
 
-                // Replace with your logic
-                populateCellList();
+            // Get CPU temperature and format it as a string with degrees Celsius
+            String cpu_temp = CpuInfo.getCpuTemperature() + "°C";
 
-                // Update UI elements
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
+            // Get the total number of CPU cores as a string
+            int totalCores = CpuInfo.getNbCores();
+            String totalCoresStr = String.valueOf(totalCores);
 
-                        Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
+            // Log the CPU temperature for debugging purposes
+            Log.d("SignalSenseLog", "runEvery1Second cpu_temp " + cpu_temp);
 
-                        ratTypeTextView.setText(ratTypeString);
+            // Retrieve a list of CPU core information
+            List<CpuGridItem> updatedItemList = CpuInfo.getAllCoresWithFrequency(totalCores);
 
-                        cellInfoAdapter.setData(iCellWithNetworkTypeList,activeSignalStrength);
-                        cellInfoAdapter.notifyDataSetChanged();
-
-                    }
-                });
+            // Add a dummy item to fill the empty cell in the last row if needed
+            int itemCount = updatedItemList.size();
+            if (itemCount % 2 == 1) {
+                updatedItemList.add(new CpuGridItem("")); // Add an empty item
             }
-        }, 0, PERIOD_MILLIS); // Schedule task every 1 second
+
+            // Update UI elements here
+            runOnUiThread(() -> {
+                // Update UI elements related to CPU usage
+                String cpuUsageStr = cpuUsage + "%";
+                cpuUsageTextView.setText(cpuUsageStr);
+                cpuTempTextView.setText(cpu_temp);
+                numberOfCoresTextView.setText(totalCoresStr);
+
+                // Clear and update the CPU frequency grid adapter with the new data
+                cpuFrequencyGridAdapter.clear();
+                cpuFrequencyGridAdapter.addAll(updatedItemList);
+                cpuFrequencyGridAdapter.notifyDataSetChanged();
+            });
+        }, 0, PERIOD_MILLIS, TimeUnit.MILLISECONDS);
+
     }
 
 
@@ -167,59 +206,50 @@ public class MainActivity extends ComponentActivity {
             String defaultSnrValue = null;
 
             // Iterate through the list of signal strengths.
-            for (CellSignalStrength cellSignalStrength:signalStrengthList)
-            {
+            for (CellSignalStrength cellSignalStrength : signalStrengthList) {
                 // If the signal strength is from 5G NR network
                 if (cellSignalStrength instanceof CellSignalStrengthNr nrSignalStrength) {
                     defaultSSRsrpValue = String.valueOf(nrSignalStrength.getSsRsrp());
 
                     // Check and handle invalid values.
-                    if(defaultSSRsrpValue.equals("2147483647"))
-                    {
+                    if (defaultSSRsrpValue.equals("2147483647")) {
                         Log.d("SignalSenseLog", "signalStrength-> defaultSSRsrpValue.equals(2147483647)" + defaultSSRsrpValue);
-                        defaultSSRsrpValue =null;
+                        defaultSSRsrpValue = null;
                     }
 
                     defaultSSrsrqValue = String.valueOf(nrSignalStrength.getSsRsrq()); // Extract NR
-                    if(defaultSSrsrqValue.equals("2147483647"))
-                    {
-                        defaultSSrsrqValue =null;
+                    if (defaultSSrsrqValue.equals("2147483647")) {
+                        defaultSSrsrqValue = null;
                     }
 
                     defaultSSSnrValue = String.valueOf(nrSignalStrength.getSsSinr());
-                    if(defaultSSSnrValue.equals("2147483647"))
-                    {
-                        defaultSSSnrValue =null;
+                    if (defaultSSSnrValue.equals("2147483647")) {
+                        defaultSSSnrValue = null;
                     }
 
                     Log.d("SignalSenseLog", "defaultSSrsrqValue-> " + defaultSSrsrqValue);
-                }
-                else if (cellSignalStrength instanceof CellSignalStrengthLte lteSignalStrength) {
+                } else if (cellSignalStrength instanceof CellSignalStrengthLte lteSignalStrength) {
 
                     defaultRssiValue = String.valueOf(lteSignalStrength.getRssi());
 
                     // Check and handle invalid values.
-                    if(defaultRssiValue.equals("2147483647"))
-                    {
-                        defaultRssiValue =null;
+                    if (defaultRssiValue.equals("2147483647")) {
+                        defaultRssiValue = null;
                     }
 
                     defaultRsrpValue = String.valueOf(lteSignalStrength.getRsrp());
-                    if(defaultRsrpValue.equals("2147483647"))
-                    {
-                        defaultRsrpValue =null;
+                    if (defaultRsrpValue.equals("2147483647")) {
+                        defaultRsrpValue = null;
                     }
 
                     defaultRsrqValue = String.valueOf(lteSignalStrength.getRsrq());
-                    if(defaultRsrqValue.equals("2147483647"))
-                    {
-                        defaultRsrqValue =null;
+                    if (defaultRsrqValue.equals("2147483647")) {
+                        defaultRsrqValue = null;
                     }
 
                     defaultSnrValue = String.valueOf(lteSignalStrength.getRssnr());
-                    if(defaultSnrValue.equals("2147483647"))
-                    {
-                        defaultSnrValue =null;
+                    if (defaultSnrValue.equals("2147483647")) {
+                        defaultSnrValue = null;
                     }
 
                 }
@@ -295,7 +325,7 @@ public class MainActivity extends ComponentActivity {
             });
 
             // Request network information from the netMonsterHelper.
-            netMonsterHelper.getCellList(registeredCellIdWithAlphaLongList,activeSignalStrength);
+            netMonsterHelper.getCellList(registeredCellIdWithAlphaLongList, activeSignalStrength);
 
         } else {
             // Show a toast message if TelephonyManager is not initialized.
@@ -304,7 +334,6 @@ public class MainActivity extends ComponentActivity {
     }
 
 
-    // Check and request necessary permissions
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private void checkAndRequestPermissions() {
         String fineLocationPermission = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -316,15 +345,19 @@ public class MainActivity extends ComponentActivity {
         boolean fineLocationPermissionGranted = fineLocationPermissionResult == PackageManager.PERMISSION_GRANTED;
         boolean phoneStatePermissionGranted = phoneStatePermissionResult == PackageManager.PERMISSION_GRANTED;
 
-        if (fineLocationPermissionGranted && phoneStatePermissionGranted) {
+        Log.d("SignalSenseLog", "checkAndRequestPermissions ");
 
-            runEvery1Second();
+        if (fineLocationPermissionGranted && phoneStatePermissionGranted) {
+            // Permissions are already granted, schedule tasks
 
         } else {
+
+            Toast.makeText(this, "Needed permission", Toast.LENGTH_LONG).show();
             // Request permissions
             ActivityCompat.requestPermissions(this, new String[]{fineLocationPermission, phoneStatePermission}, 0);
         }
     }
+
 
     // Handle permission request results
     @Override
@@ -341,12 +374,12 @@ public class MainActivity extends ComponentActivity {
             if (allPermissionsGranted) {
                 // Permissions granted, proceed with your code
                 Log.d("SignalSenseLog", "Permissions granted after request.");
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    checkAndRequestPermissions();
-                }
+                checkAndRequestPermissions();
             } else {
                 // Permissions denied, handle accordingly
                 Log.d("SignalSenseLog", "Permissions denied after request.");
+
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -370,6 +403,7 @@ public class MainActivity extends ComponentActivity {
             }
         }
     };
+
 
     private void checkIfGpsEnabled() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -416,44 +450,28 @@ public class MainActivity extends ComponentActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
-        // Resume the periodic task when the app is resumed
-        if (timer != null) {
-            runEvery1Second();
+        if (executorService == null || executorService.isShutdown()) {
+            executorService = Executors.newScheduledThreadPool(2);
+            scheduleTasks(); // Start scheduling tasks
         }
+
     }
+
 
     @Override
     protected void onPause() {
         super.onPause();
-
-        // Pause the periodic task when the app goes into the background
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdownNow();
         }
     }
+
 
     @Override
     protected void onStop() {
         super.onStop();
-        // Stop the timer when the activity goes into the background
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdownNow();
         }
     }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Unregister the BroadcastReceiver to prevent leaks
-        unregisterReceiver(gpsStatusReceiver);
-        // Clean up any resources when the activity is destroyed
-        if (timer != null) {
-            timer.cancel();
-            timer.purge();
-        }
-    }
-
 }
