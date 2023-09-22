@@ -26,26 +26,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="16dp"
-        android:paddingTop="16dp">
-
-
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
 
         <TextView
             android:id="@+id/tv_networkType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Network Type: "
             android:paddingHorizontal="16dp"
+            android:text="Network Type: "
             android:textStyle="bold" />
 
 
         <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:paddingHorizontal="16dp"
-            android:layout_height="wrap_content">
+            android:paddingHorizontal="16dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -54,7 +52,6 @@
                 android:orientation="vertical">
 
 
-
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content">
@@ -62,15 +59,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="RSRP: "
-                         />
+                        android:text="RSRP: " />
 
                     <TextView
                         android:id="@+id/tv_rsrp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" "
-                         />
+                        android:text=" " />
 
                 </LinearLayout>
 
@@ -82,15 +77,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="RSRQ: "
-                         />
+                        android:text="RSRQ: " />
 
                     <TextView
                         android:id="@+id/tv_rsrq"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" "
-                         />
+                        android:text=" " />
 
                 </LinearLayout>
 
@@ -102,15 +95,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="SNR: "
-                        />
+                        android:text="SNR: " />
 
                     <TextView
                         android:id="@+id/tv_snr"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" "
-                        />
+                        android:text=" " />
                 </LinearLayout>
 
                 <LinearLayout
@@ -121,8 +112,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="eNB: "
-                        />
+                        android:text="eNB: " />
 
 
                     <TextView
@@ -131,43 +121,90 @@
                         android:layout_height="wrap_content"
                         android:text="eNB: " />
                 </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="ECI: " />
+
+
+                    <TextView
+                        android:id="@+id/tv_lte_eci"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TAC: " />
+
+
+                    <TextView
+                        android:id="@+id/tv_lte_tac"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="" />
+                </LinearLayout>
             </LinearLayout>
+
+
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_cellId"
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:text="" />
+            android:paddingHorizontal="16dp">
 
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PCI: " />
+
+
+            <TextView
+                android:id="@+id/tv_lte_pci"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_timestamp"
             android:layout_width="wrap_content"
-            android:paddingHorizontal="16dp"
             android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
             android:text="" />
 
 
         <TextView
             android:id="@+id/tv_network_technology"
             android:layout_width="wrap_content"
-            android:paddingHorizontal="16dp"
             android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
             android:text="Network Technology: " />
 
 
-
-
-
         <LinearLayout
+            android:id="@+id/ll_5g_strength_values"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:id="@+id/ll_5g_strength_values"
-            android:visibility="visible"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -188,87 +225,128 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
-                android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/tv_networkType_nsa"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Network Type: "
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_height="wrap_content">
+                android:paddingHorizontal="16dp">
 
                 <TextView
+                    android:id="@+id/tv_networkType_nsa"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="SS RSRP: "
-                    />
+                    android:text="Network Type: "
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SS RSRP: " />
+
+                    <TextView
+                        android:id="@+id/tv_ssrsrp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="loading" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SS RSRQ: " />
+
+                    <TextView
+                        android:id="@+id/tv_ssrsrq"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="loading" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SS SINR: " />
+
+                    <TextView
+                        android:id="@+id/tv_sssinr"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="loading" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="NCI: " />
+
+
+                    <TextView
+                        android:id="@+id/tv_nr_nci"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TAC: " />
+
+
+                    <TextView
+                        android:id="@+id/tv_nr_tac"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PCI: " />
+
+
+                    <TextView
+                        android:id="@+id/tv_nr_pci"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="" />
+                </LinearLayout>
+
 
                 <TextView
-                    android:id="@+id/tv_ssrsrp"
+                    android:id="@+id/tv_nsa_timestamp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="loading"
-                    />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="SS RSRQ: "
-                    />
-
-                <TextView
-                    android:id="@+id/tv_ssrsrq"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="loading"
-                    />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="SS SINR: "
-                    />
-
-                <TextView
-                    android:id="@+id/tv_sssinr"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="loading"
-                    />
-            </LinearLayout>
-
-
-            <TextView
-                android:id="@+id/tv_nsa_cellId"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="" />
-
-
-            <TextView
-                android:id="@+id/tv_nsa_timestamp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="" />
+                    android:text="" />
 
             </LinearLayout>
         </LinearLayout>

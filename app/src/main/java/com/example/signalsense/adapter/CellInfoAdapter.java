@@ -76,11 +76,15 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
         TextView eNBTextView;
         TextView networkTypeTextView;
         TextView nsaNetworkTypeTextView;
-        TextView cellIdTextView;
         TextView networkTechnologyTextView;
         TextView timestampTextView;
-        TextView nsaCellIdTextView;
         TextView nsaTimestampTextView;
+        TextView lteECITextView;
+        TextView lteTACTextView;
+        TextView ltePCITextView;
+        TextView nrNCITextView;
+        TextView nrTACTextView;
+        TextView nrPCITextView;
         LinearLayout strengthValuesFor5g;
 
         public CellInfoViewHolder(@NonNull View itemView) {
@@ -92,14 +96,22 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
             ssRsrqTextView = itemView.findViewById(R.id.tv_ssrsrq);
             ssRsrpTextView = itemView.findViewById(R.id.tv_ssrsrp);
             ssSinrTextView = itemView.findViewById(R.id.tv_sssinr);
-            nsaCellIdTextView = itemView.findViewById(R.id.tv_nsa_cellId);
+
+            lteECITextView = itemView.findViewById(R.id.tv_lte_eci);
+            lteTACTextView = itemView.findViewById(R.id.tv_lte_tac);
+            ltePCITextView = itemView.findViewById(R.id.tv_lte_pci);
+
+
+            nrNCITextView= itemView.findViewById(R.id.tv_nr_nci);
+            nrTACTextView= itemView.findViewById(R.id.tv_nr_tac);
+            nrPCITextView= itemView.findViewById(R.id.tv_nr_pci);
+
             nsaTimestampTextView = itemView.findViewById(R.id.tv_nsa_timestamp);
             nsaNetworkTypeTextView = itemView.findViewById(R.id.tv_networkType_nsa);
 
             eNBTextView = itemView.findViewById(R.id.tv_enb);
             networkTypeTextView = itemView.findViewById(R.id.tv_networkType);
             networkTechnologyTextView = itemView.findViewById(R.id.tv_network_technology);
-            cellIdTextView = itemView.findViewById(R.id.tv_cellId);
             timestampTextView = itemView.findViewById(R.id.tv_timestamp);
 
             strengthValuesFor5g = itemView.findViewById(R.id.ll_5g_strength_values);
@@ -149,6 +161,16 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                         ssSinrTextView.setText("loading");
                     }
 
+                    if (_5gSignalsCellNr.getNci() != null) {
+                        nrNCITextView.setText(_5gSignalsCellNr.getNci().toString());
+                    }
+                    if (_5gSignalsCellNr.getTac() != null) {
+                        nrTACTextView.setText(_5gSignalsCellNr.getTac().toString());
+                    }
+                    if (_5gSignalsCellNr.getPci() != null) {
+                        nrPCITextView.setText(_5gSignalsCellNr.getPci().toString());
+                    }
+
                 } else if(activeSignalStrength.getSsRsrp() != null || activeSignalStrength.getSsRsrq() != null || activeSignalStrength.getSsSinr() != null) {
 
                     // Populate signal strength values from the active signal if available
@@ -170,6 +192,8 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                     else{
                         ssSinrTextView.setText("loading");
                     }
+
+
                 }
                 else{
                     // Hide strength values if no data is available
@@ -177,7 +201,6 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                 }
 
 
-                nsaCellIdTextView.setText("CellId: " + cellLte.getPci());
                 nsaTimestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
 
                 nsaNetworkTypeTextView.setText(alphaLong + " 5G");
@@ -207,12 +230,19 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                 snrTextView.setText(activeSignalStrength.getSnr());
             }
 
+            if (cellLte.getEci() != null) {
+                lteECITextView.setText(cellLte.getEci().toString());
+            }
+            if (cellLte.getTac() != null) {
+                lteTACTextView.setText(cellLte.getTac().toString());
+            }
+            if (cellLte.getPci() != null) {
+                ltePCITextView.setText(cellLte.getPci().toString());
+            }
 
-            // Set common cell information
-            cellIdTextView.setText("CellId: " + cellLte.getPci());
+
             networkTypeTextView.setText(alphaLong + " 4G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
-
             eNBTextView.setText("" + cellLte.getEnb());
 
 
@@ -222,7 +252,6 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
         public void populateNrData(CellNr cellNr, String alphaLong, NetworkType networkType, long currentMilliseconds) {
 
-            cellIdTextView.setText("CellId: " + cellNr.getPci());
 
 
             if (cellNr.getSignal().getSsRsrq() != null) {
