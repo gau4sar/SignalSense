@@ -1,3 +1,3 @@
 package com.example.signalsense.data
 
-data class CpuGridItem(val cpuPercentage:String)
+data class CpuGridItem(val cpuUsagePercentage:String)

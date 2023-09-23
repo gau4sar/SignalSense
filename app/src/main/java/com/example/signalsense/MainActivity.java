@@ -128,7 +128,7 @@ public class MainActivity extends ComponentActivity {
 
             // Calculate CPU usage
             CpuInfo.CoreUsageResult coreUsageResult = CpuInfo.getEachAndTotalCoreUsage();
-            int cpuUsage = coreUsageResult.getOverallCpuUsage();
+            int overallCpuUsage = coreUsageResult.getOverallCpuUsage();
 
             // Get CPU temperature and format it as a string with degrees Celsius
             String cpu_temp = CpuInfo.getCpuTemperature() + "°C";
@@ -137,10 +137,7 @@ public class MainActivity extends ComponentActivity {
             int totalCores = CpuInfo.getNbCores();
             String totalCoresStr = String.valueOf(totalCores);
 
-            // Log the CPU temperature for debugging purposes
-            Log.d("SignalSenseLog", "runEvery1Second cpu_temp " + cpu_temp);
-
-            // Retrieve a list of CPU core information
+            // Retrieve list of each CPU core usage
             List<CpuGridItem> updatedItemList = coreUsageResult.getCpuGridItems();
 
             // Add a dummy item to fill the empty cell in the last row if needed
@@ -152,7 +149,7 @@ public class MainActivity extends ComponentActivity {
             // Update UI elements here
             runOnUiThread(() -> {
                 // Update UI elements related to CPU usage
-                String cpuUsageStr = cpuUsage + "%";
+                String cpuUsageStr = overallCpuUsage + "%";
                 cpuUsageTextView.setText(cpuUsageStr);
                 cpuTempTextView.setText(cpu_temp);
                 numberOfCoresTextView.setText(totalCoresStr);

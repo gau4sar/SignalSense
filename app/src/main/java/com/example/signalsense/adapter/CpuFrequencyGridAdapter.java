@@ -8,22 +8,13 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 
 
 import com.example.signalsense.data.CpuGridItem;
 import com.example.signalsense.R;
 
-import java.util.List;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -47,7 +38,7 @@ public class CpuFrequencyGridAdapter extends ArrayAdapter<CpuGridItem> {
         CpuGridItem courseModel = getItem(position);
         TextView cpuFrequencyTextView = listitemView.findViewById(R.id.tv_cpu_frequency);
 
-        cpuFrequencyTextView.setText(courseModel.getCpuPercentage());
+        cpuFrequencyTextView.setText(courseModel.getCpuUsagePercentage());
 
         return listitemView;
     }
