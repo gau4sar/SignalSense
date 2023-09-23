@@ -127,7 +127,8 @@ public class MainActivity extends ComponentActivity {
         executorService.scheduleAtFixedRate(() -> {
 
             // Calculate CPU usage
-            int cpuUsage = CpuInfo.getCpuUsagePercentage();
+            CpuInfo.CoreUsageResult coreUsageResult = CpuInfo.getEachAndTotalCoreUsage();
+            int cpuUsage = coreUsageResult.getOverallCpuUsage();
 
             // Get CPU temperature and format it as a string with degrees Celsius
             String cpu_temp = CpuInfo.getCpuTemperature() + "°C";
@@ -140,7 +141,7 @@ public class MainActivity extends ComponentActivity {
             Log.d("SignalSenseLog", "runEvery1Second cpu_temp " + cpu_temp);
 
             // Retrieve a list of CPU core information
-            List<CpuGridItem> updatedItemList = CpuInfo.getAllCoresWithFrequency(totalCores);
+            List<CpuGridItem> updatedItemList = coreUsageResult.getCpuGridItems();
 
             // Add a dummy item to fill the empty cell in the last row if needed
             int itemCount = updatedItemList.size();

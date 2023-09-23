@@ -1,6 +1,7 @@
 package com.example.signalsense;
 
 import android.util.Log;
+
 import com.example.signalsense.data.CpuGridItem;
 import java.io.BufferedReader;
 import java.io.File;
@@ -89,6 +90,39 @@ public class CpuInfo {
             coresUsage[0] /= mCoresFreq.size();
         return coresUsage;
     }
+
+
+    /**
+     * Retrieves the current usage of each CPU core and calculates the total CPU usage.
+     *
+     * @return A CoreUsageResult object containing the overall CPU usage as well as a list
+     *         of CpuGridItem objects representing the usage of individual CPU cores.
+     */
+    public static synchronized CoreUsageResult getEachAndTotalCoreUsage() {
+        initCoresFreq();
+        int nbCores = mCoresFreq.size() + 1;
+        int[] coresUsage = new int[nbCores];
+        coresUsage[0] = 0;
+        List<CpuGridItem> cpuGridItems = new ArrayList<>();
+
+        for (byte i = 0; i < mCoresFreq.size(); i++) {
+            int currentUsage = mCoresFreq.get(i).getCurrentUsage();
+            coresUsage[i + 1] = currentUsage;
+
+            // Overall cpu usage is stored in index 0
+            coresUsage[0] += coresUsage[i + 1];
+
+            // Add CpuGridItem to the list
+            cpuGridItems.add(new CpuGridItem("CPU" + i + ": "+ currentUsage+"%"));
+        }
+
+        if (mCoresFreq.size() > 0)
+            // Overall cpu usage is stored in index 0
+            coresUsage[0] /= mCoresFreq.size();
+
+        return new CoreUsageResult(coresUsage[0], cpuGridItems);
+    }
+
 
     /**
      * Initializes core frequency information.
@@ -250,6 +284,25 @@ public class CpuInfo {
             return cpuUsage;
         }
     }
+
+    public static class CoreUsageResult {
+        private int overallCpuUsage;
+        private List<CpuGridItem> cpuGridItems;
+
+        public CoreUsageResult(int overallCpuUsage, List<CpuGridItem> cpuGridItems) {
+            this.overallCpuUsage = overallCpuUsage;
+            this.cpuGridItems = cpuGridItems;
+        }
+
+        public int getOverallCpuUsage() {
+            return overallCpuUsage;
+        }
+
+        public List<CpuGridItem> getCpuGridItems() {
+            return cpuGridItems;
+        }
+    }
+
 
     // Stores current core frequencies
     private static ArrayList<CoreFreq> mCoresFreq;

@@ -47,7 +47,7 @@ public class CpuFrequencyGridAdapter extends ArrayAdapter<CpuGridItem> {
         CpuGridItem courseModel = getItem(position);
         TextView cpuFrequencyTextView = listitemView.findViewById(R.id.tv_cpu_frequency);
 
-        cpuFrequencyTextView.setText(courseModel.getCpuFrequency());
+        cpuFrequencyTextView.setText(courseModel.getCpuPercentage());
 
         return listitemView;
     }
