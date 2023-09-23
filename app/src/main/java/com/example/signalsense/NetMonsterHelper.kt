@@ -2,6 +2,7 @@ package com.example.signalsense
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.telephony.CellIdentityNr
 import android.util.Log
 import cz.mroczis.netmonster.core.db.model.NetworkType
 import cz.mroczis.netmonster.core.factory.NetMonsterFactory
@@ -14,7 +15,8 @@ data class ICellWithNetworkType(
     val alphaLong: String?,
     val networkType: NetworkType,
     val ratType: String,
-    val _5gSignals: CellNr? = null
+    val _5gSignals: CellNr? = null,
+    var cellIdentityNr: CellIdentityNr? = null
 )
 
 // Data class representing active signal strength
@@ -29,7 +31,11 @@ data class ActiveSignalStrength(
 )
 
 // Data class representing registered cell ID with operator name
-data class RegisteredCellIdWithAlphaLong(val cellId: Int, val alphaLong: String)
+data class RegisteredCellIdWithAlphaLongAndNCI(
+    val pci: Int,
+    val alphaLong: String,
+    var cellIdentityNr: CellIdentityNr? = null
+)
 
 // Helper class for collecting network information using NetMonster library
 class NetMonsterHelper(private val context: Context) {
@@ -48,7 +54,7 @@ class NetMonsterHelper(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun getCellList(
-        registeredCellsIdWithAlphaLong: MutableList<RegisteredCellIdWithAlphaLong>,
+        registeredCellsIdWithAlphaLong: MutableList<RegisteredCellIdWithAlphaLongAndNCI>,
         activeSignalStrength: ActiveSignalStrength
     ) {
 
@@ -57,7 +63,7 @@ class NetMonsterHelper(private val context: Context) {
 
         Log.d("signalsense", "NetMonsterFactory cellList" + cellList)
 
-        val registeredCellIds = registeredCellsIdWithAlphaLong.map { it.cellId }
+        val registeredCellIds = registeredCellsIdWithAlphaLong.map { it.pci }
 
 
         // Filter LTE cells
@@ -116,6 +122,7 @@ class NetMonsterHelper(private val context: Context) {
                 it.pci == lteCell.pci
             }
 
+            val registeredCellIdWithAlphaLongAndNCI = registeredCellsIdWithAlphaLong.find { it.pci == lteCell.pci }
 
             val networkType =
                 NetMonsterFactory.get(context).getNetworkType(lteCell.subscriptionId)
@@ -131,7 +138,7 @@ class NetMonsterHelper(private val context: Context) {
 
             if (ratType == RatType._5G_NSA.value) {
                 if (activeSignalStrength.ssRsrp == null && activeSignalStrength.ssRsrq == null && activeSignalStrength.ssSinr == null) {
-                        ratType = RatType.LTE.value
+                    ratType = RatType.LTE.value
                 }
             }
 
@@ -149,8 +156,9 @@ class NetMonsterHelper(private val context: Context) {
                     iCellWithNetworkType = ICellWithNetworkType(
                         cellLte = lteCell,
                         networkType = networkType,
-                        alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
-                        ratType = ratType
+                        alphaLong = registeredCellIdWithAlphaLongAndNCI?.alphaLong,
+                        ratType = ratType,
+                        cellIdentityNr = registeredCellIdWithAlphaLongAndNCI?.cellIdentityNr
                     )
                 } else {
 
@@ -160,9 +168,10 @@ class NetMonsterHelper(private val context: Context) {
                     iCellWithNetworkType = ICellWithNetworkType(
                         cellLte = lteCell,
                         networkType = networkType,
-                        alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
+                        alphaLong = registeredCellsIdWithAlphaLong.find { it.pci == lteCell.pci }?.alphaLong,
                         ratType = RatType._5G_NSA.value,
-                        _5gSignals = matchingNSaCell
+                        _5gSignals = matchingNSaCell,
+                        cellIdentityNr = registeredCellIdWithAlphaLongAndNCI?.cellIdentityNr
                     )
                 }
             } else {
@@ -170,8 +179,9 @@ class NetMonsterHelper(private val context: Context) {
                 iCellWithNetworkType = ICellWithNetworkType(
                     cellLte = lteCell,
                     networkType = networkType,
-                    alphaLong = registeredCellsIdWithAlphaLong.find { it.cellId == lteCell.pci }?.alphaLong,
-                    ratType = ratType
+                    alphaLong = registeredCellsIdWithAlphaLong.find { it.pci == lteCell.pci }?.alphaLong,
+                    ratType = ratType,
+                    cellIdentityNr = registeredCellIdWithAlphaLongAndNCI?.cellIdentityNr
                 )
             }
 

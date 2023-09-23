@@ -73,16 +73,19 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
         TextView ssRsrpTextView;
         TextView ssSinrTextView;
 
-        TextView eNBTextView;
+        TextView lteENBTextView;
         TextView networkTypeTextView;
         TextView nsaNetworkTypeTextView;
         TextView networkTechnologyTextView;
         TextView timestampTextView;
         TextView nsaTimestampTextView;
         TextView lteECITextView;
+        TextView lteCIDTextView;
         TextView lteTACTextView;
         TextView ltePCITextView;
         TextView nrNCITextView;
+        TextView nrCIDTextView;
+        TextView nrGNBTextView;
         TextView nrTACTextView;
         TextView nrPCITextView;
         LinearLayout strengthValuesFor5g;
@@ -98,18 +101,21 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
             ssSinrTextView = itemView.findViewById(R.id.tv_sssinr);
 
             lteECITextView = itemView.findViewById(R.id.tv_lte_eci);
+            lteCIDTextView = itemView.findViewById(R.id.tv_lte_cid);
+            lteENBTextView = itemView.findViewById(R.id.tv_enb);
             lteTACTextView = itemView.findViewById(R.id.tv_lte_tac);
             ltePCITextView = itemView.findViewById(R.id.tv_lte_pci);
 
 
-            nrNCITextView= itemView.findViewById(R.id.tv_nr_nci);
-            nrTACTextView= itemView.findViewById(R.id.tv_nr_tac);
-            nrPCITextView= itemView.findViewById(R.id.tv_nr_pci);
+            nrNCITextView = itemView.findViewById(R.id.tv_nr_nci);
+            nrCIDTextView= itemView.findViewById(R.id.tv_nr_cid);
+            nrGNBTextView = itemView.findViewById(R.id.tv_gnb);
+            nrTACTextView = itemView.findViewById(R.id.tv_nr_tac);
+            nrPCITextView = itemView.findViewById(R.id.tv_nr_pci);
 
             nsaTimestampTextView = itemView.findViewById(R.id.tv_nsa_timestamp);
             nsaNetworkTypeTextView = itemView.findViewById(R.id.tv_networkType_nsa);
 
-            eNBTextView = itemView.findViewById(R.id.tv_enb);
             networkTypeTextView = itemView.findViewById(R.id.tv_networkType);
             networkTechnologyTextView = itemView.findViewById(R.id.tv_network_technology);
             timestampTextView = itemView.findViewById(R.id.tv_timestamp);
@@ -163,39 +169,55 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
                     if (_5gSignalsCellNr.getNci() != null) {
                         nrNCITextView.setText(_5gSignalsCellNr.getNci().toString());
+                    } else if (iCellWithNetworkType.getCellIdentityNr() != null && iCellWithNetworkType.getCellIdentityNr().getNci() != -1) {
+                        nrNCITextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getNci()));
                     }
                     if (_5gSignalsCellNr.getTac() != null) {
                         nrTACTextView.setText(_5gSignalsCellNr.getTac().toString());
+                    } else if (iCellWithNetworkType.getCellIdentityNr() != null && iCellWithNetworkType.getCellIdentityNr().getTac() != -1) {
+                        nrTACTextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getTac()));
                     }
                     if (_5gSignalsCellNr.getPci() != null) {
                         nrPCITextView.setText(_5gSignalsCellNr.getPci().toString());
+                    } else if (iCellWithNetworkType.getCellIdentityNr() != null && iCellWithNetworkType.getCellIdentityNr().getPci() != -1) {
+                        nrPCITextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getPci()));
                     }
 
-                } else if(activeSignalStrength.getSsRsrp() != null || activeSignalStrength.getSsRsrq() != null || activeSignalStrength.getSsSinr() != null) {
+                } else if (activeSignalStrength.getSsRsrp() != null || activeSignalStrength.getSsRsrq() != null || activeSignalStrength.getSsSinr() != null) {
 
                     // Populate signal strength values from the active signal if available
                     if (activeSignalStrength.getSsRsrp() != null) {
                         ssRsrpTextView.setText(activeSignalStrength.getSsRsrp());
-                    }
-                    else{
+                    } else {
                         ssRsrpTextView.setText("loading");
                     }
                     if (activeSignalStrength.getSsRsrq() != null) {
                         ssRsrqTextView.setText(activeSignalStrength.getSsRsrq());
-                    }
-                    else{
+                    } else {
                         ssRsrqTextView.setText("loading");
                     }
                     if (activeSignalStrength.getSsSinr() != null) {
                         ssSinrTextView.setText(activeSignalStrength.getSsSinr());
-                    }
-                    else{
+                    } else {
                         ssSinrTextView.setText("loading");
                     }
 
-
-                }
-                else{
+                    if (iCellWithNetworkType.getCellIdentityNr() != null && iCellWithNetworkType.getCellIdentityNr().getNci() != -1) {
+                        nrNCITextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getNci()));
+                    } else {
+                        nrNCITextView.setText("N/A");
+                    }
+                    if (iCellWithNetworkType.getCellIdentityNr() != null && iCellWithNetworkType.getCellIdentityNr().getTac() != -1) {
+                        nrTACTextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getTac()));
+                    } else {
+                        nrTACTextView.setText("N/A");
+                    }
+                    if (iCellWithNetworkType.getCellIdentityNr() != null && iCellWithNetworkType.getCellIdentityNr().getPci() != -1) {
+                        nrPCITextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getPci()));
+                    } else {
+                        nrPCITextView.setText("N/A");
+                    }
+                } else {
                     // Hide strength values if no data is available
                     strengthValuesFor5g.setVisibility(View.GONE);
                 }
@@ -239,11 +261,16 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
             if (cellLte.getPci() != null) {
                 ltePCITextView.setText(cellLte.getPci().toString());
             }
+            if (cellLte.getCid() != null) {
+                lteCIDTextView.setText(cellLte.getCid().toString());
+            }
+            if (cellLte.getEnb() != null) {
+                lteENBTextView.setText("" + cellLte.getEnb());
+            }
 
 
             networkTypeTextView.setText(alphaLong + " 4G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
-            eNBTextView.setText("" + cellLte.getEnb());
 
 
             //networkTechnologyTextView.setText("Network technology: " + networkType);
@@ -251,7 +278,6 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
         }
 
         public void populateNrData(CellNr cellNr, String alphaLong, NetworkType networkType, long currentMilliseconds) {
-
 
 
             if (cellNr.getSignal().getSsRsrq() != null) {
@@ -266,7 +292,7 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                 snrTextView.setText("" + +cellNr.getSignal().getSsSinr());
             }
 
-            eNBTextView.setVisibility(View.GONE);
+            lteENBTextView.setVisibility(View.GONE);
             networkTypeTextView.setText(alphaLong + " 5G");
             timestampTextView.setText("Timestamp: " + convertMillisecondsToCDT(currentMilliseconds));
             //networkTechnologyTextView.setText("Network technology: " + networkType);

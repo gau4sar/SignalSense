@@ -47,7 +47,6 @@ import com.example.signalsense.data.CpuGridItem;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
 
 
 public class MainActivity extends ComponentActivity {
@@ -262,12 +261,14 @@ public class MainActivity extends ComponentActivity {
             // Create lists to store registered cell information.
             List<CellInfo> registeredCells = new ArrayList<>();
             List<Integer> registeredCellIds = new ArrayList<>();
-            List<RegisteredCellIdWithAlphaLong> registeredCellIdWithAlphaLongList = new ArrayList<>();
+            List<RegisteredCellIdWithAlphaLongAndNCI> registeredCellIdWithAlphaLongAndNCIList = new ArrayList<>();
 
 
             if (cellInfoList != null) {
 
                 for (CellInfo cellInfo : cellInfoList) {
+                    Log.d("SignalSenseLog", "cellInfo -> " + cellInfo);
+
                     if (cellInfo.isRegistered()) {
                         // This cell is connected to your SIM card
                         registeredCells.add(cellInfo);
@@ -286,7 +287,7 @@ public class MainActivity extends ComponentActivity {
                         cellSignalStrength.getRssnr();
                         int pci = cellIdentity.getPci();
                         Log.d("SignalSenseLog", "CellInfoLteTest  " + "getPci-> " + pci + " info-> " + info);
-                        registeredCellIdWithAlphaLongList.add(new RegisteredCellIdWithAlphaLong(pci, (String) cellIdentity.getOperatorAlphaLong()));
+                        registeredCellIdWithAlphaLongAndNCIList.add(new RegisteredCellIdWithAlphaLongAndNCI(pci, (String) cellIdentity.getOperatorAlphaLong(), null));
                     } else if (info instanceof CellInfoNr cellInfoNr) {
                         // Extract CellInfoNr (5G) cell information.
                         CellSignalStrengthNr cellSignalStrength = (CellSignalStrengthNr) ((CellInfoNr) info).getCellSignalStrength();
@@ -294,11 +295,28 @@ public class MainActivity extends ComponentActivity {
                         int pci = cellIdentity.getPci();
                         cellSignalStrength.getSsSinr();
                         Log.d("SignalSenseLog", "CellInfoNrTest  " + "getPci-> " + pci + " info-> " + info);
-                        registeredCellIdWithAlphaLongList.add(new RegisteredCellIdWithAlphaLong(pci, (String) cellIdentity.getOperatorAlphaLong()));
+                        registeredCellIdWithAlphaLongAndNCIList.add(new RegisteredCellIdWithAlphaLongAndNCI(pci, (String) cellIdentity.getOperatorAlphaLong(), null));
                     }
                 }
 
+
+
                 Log.d("SignalSenseLog", "registerdcellids =>  " + registeredCellIds);
+            }
+
+            for (CellInfo info : cellInfoList) {
+                if (info instanceof CellInfoNr cellInfoNr) {
+                    CellIdentityNr cellIdentity = (CellIdentityNr) cellInfoNr.getCellIdentity();
+                    int pci = cellIdentity.getPci();
+
+                    // Iterate through registeredCellIdWithAlphaLongAndNCIList
+                    for (RegisteredCellIdWithAlphaLongAndNCI registeredCellInfo : registeredCellIdWithAlphaLongAndNCIList) {
+                        if (registeredCellInfo.getPci() == pci) {
+                            // Update nrNci value for matching PCI
+                            registeredCellInfo.setCellIdentityNr(cellIdentity);
+                        }
+                    }
+                }
             }
 
 
@@ -325,7 +343,7 @@ public class MainActivity extends ComponentActivity {
             });
 
             // Request network information from the netMonsterHelper.
-            netMonsterHelper.getCellList(registeredCellIdWithAlphaLongList, activeSignalStrength);
+            netMonsterHelper.getCellList(registeredCellIdWithAlphaLongAndNCIList, activeSignalStrength);
 
         } else {
             // Show a toast message if TelephonyManager is not initialized.
