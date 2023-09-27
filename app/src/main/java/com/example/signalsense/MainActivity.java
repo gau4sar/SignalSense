@@ -1,6 +1,9 @@
 package com.example.signalsense;
 
 
+import static org.lwjgl.opengl.ARBTimerQuery.GL_TIMESTAMP;
+import static org.lwjgl.opengl.ARBTimerQuery.glQueryCounter;
+
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -10,6 +13,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -44,6 +48,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.signalsense.adapter.CellInfoAdapter;
 import com.example.signalsense.adapter.CpuFrequencyGridAdapter;
 import com.example.signalsense.data.CpuGridItem;
+import com.example.signalsense.utils.MyRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +56,7 @@ import java.util.List;
 
 public class MainActivity extends ComponentActivity {
 
+    private GLSurfaceView glSurfaceView;
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
     private ActiveSignalStrength activeSignalStrength = null;
     private int secondsCount = 0;
@@ -78,6 +84,18 @@ public class MainActivity extends ComponentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        // Find the GLSurfaceView from the layout
+        glSurfaceView = findViewById(R.id.glSurfaceView);
+
+        // Create an instance of your custom renderer
+        MyRenderer renderer = new MyRenderer();
+
+        // Set the renderer for the GLSurfaceView
+        glSurfaceView.setEGLContextClientVersion(3); // Use OpenGL ES 3.0
+        glSurfaceView.setRenderer(renderer);
+
 
         executorService = Executors.newScheduledThreadPool(2);
 
