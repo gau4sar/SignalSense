@@ -3,6 +3,8 @@ package com.example.signalsense
 import android.annotation.SuppressLint
 import android.content.Context
 import android.telephony.CellIdentityNr
+import android.telephony.CellSignalStrengthLte
+import android.telephony.CellSignalStrengthNr
 import android.util.Log
 import cz.mroczis.netmonster.core.db.model.NetworkType
 import cz.mroczis.netmonster.core.factory.NetMonsterFactory
@@ -28,6 +30,8 @@ data class ActiveSignalStrength(
     val ssRsrp: String?,
     val ssRsrq: String?,
     val ssSinr: String?,
+    val cellSignalStrengthNr: CellSignalStrengthNr?,
+    val cellSignalStrengthLte: CellSignalStrengthLte?
 )
 
 // Data class representing registered cell ID with operator name

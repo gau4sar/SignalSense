@@ -111,7 +111,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -127,53 +127,16 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="SS RSRP: "
+                        android:text="Brightness: "
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tv_default_ssrsrp"
+                        android:id="@+id/tv_brightness_percentage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text=" "
                         android:textStyle="bold" />
 
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SS RSRQ: "
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_default_ssrsrq"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=" "
-                        android:textStyle="bold" />
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="SS SINR: "
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_default_sssnr"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=" "
-                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

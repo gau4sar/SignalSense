@@ -62,6 +62,7 @@ public class MainActivity extends ComponentActivity {
 
     // UI TextViews
     private TextView ratTypeTextView;
+    private TextView brightnessPercentageTextView;
     private TextView cpuUsageTextView;
     private TextView cpuTempTextView;
     private TextView numberOfCoresTextView;
@@ -84,6 +85,7 @@ public class MainActivity extends ComponentActivity {
         cpuFrequencyRecyclerView = findViewById(R.id.gridView_cpu_frequency);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
+        brightnessPercentageTextView =  findViewById(R.id.tv_brightness_percentage);
         ratTypeTextView = findViewById(R.id.tv_rat_type);
         cpuUsageTextView = findViewById(R.id.tv_cpu_usage);
         cpuTempTextView = findViewById(R.id.tv_cpu_temp);
@@ -108,15 +110,18 @@ public class MainActivity extends ComponentActivity {
         registerReceiver(gpsStatusReceiver, new IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION));
     }
 
-
     // Schedule cell info population and CPU usage tasks
     private void scheduleTasks() {
         executorService.scheduleAtFixedRate(() -> {
+
+            float brightnessPercentage = CpuInfo.getScreenBrightnessPercentage(getContentResolver());
+
             // Populate cell info (replace with your logic)
             populateCellList();
             Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
             // Update UI elements here
             runOnUiThread(() -> {
+                brightnessPercentageTextView.setText(brightnessPercentage+"%");
                 // Update UI elements related to cell info
                 ratTypeTextView.setText(ratTypeString);
                 cellInfoAdapter.setData(iCellWithNetworkTypeList, activeSignalStrength);
@@ -202,6 +207,9 @@ public class MainActivity extends ComponentActivity {
             String defaultRsrqValue = null;
             String defaultSnrValue = null;
 
+            CellSignalStrengthNr cellSignalStrengthNr = null;
+            CellSignalStrengthLte cellSignalStrengthLte = null;
+
             // Iterate through the list of signal strengths.
             for (CellSignalStrength cellSignalStrength : signalStrengthList) {
                 // If the signal strength is from 5G NR network
@@ -223,6 +231,8 @@ public class MainActivity extends ComponentActivity {
                     if (defaultSSSnrValue.equals("2147483647")) {
                         defaultSSSnrValue = null;
                     }
+
+                    cellSignalStrengthNr = nrSignalStrength;
 
                     Log.d("SignalSenseLog", "defaultSSrsrqValue-> " + defaultSSrsrqValue);
                 } else if (cellSignalStrength instanceof CellSignalStrengthLte lteSignalStrength) {
@@ -249,11 +259,12 @@ public class MainActivity extends ComponentActivity {
                         defaultSnrValue = null;
                     }
 
+                    cellSignalStrengthLte=lteSignalStrength;
                 }
             }
 
             // Create an instance of ActiveSignalStrength with extracted values.
-            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue, defaultRsrpValue, defaultRsrqValue, defaultSnrValue, defaultSSRsrpValue, defaultSSrsrqValue, defaultSSSnrValue);
+            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue, defaultRsrpValue, defaultRsrqValue, defaultSnrValue, defaultSSRsrpValue, defaultSSrsrqValue, defaultSSSnrValue,cellSignalStrengthNr,cellSignalStrengthLte);
 
 
             // Create lists to store registered cell information.

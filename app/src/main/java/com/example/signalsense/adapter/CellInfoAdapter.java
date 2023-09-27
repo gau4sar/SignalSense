@@ -1,5 +1,8 @@
 package com.example.signalsense.adapter;
 
+import static android.telephony.CellInfo.UNAVAILABLE;
+
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +16,7 @@ import com.example.signalsense.ActiveSignalStrength;
 import com.example.signalsense.ICellWithNetworkType;
 import com.example.signalsense.NetMonsterHelper;
 import com.example.signalsense.R;
+import com.example.signalsense.utils.Util;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -83,11 +87,18 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
         TextView lteCIDTextView;
         TextView lteTACTextView;
         TextView ltePCITextView;
+        TextView lteULTextView;
+        TextView lteCQITextView;
+        TextView lteCQIIndexTextView;
         TextView nrNCITextView;
         TextView nrCIDTextView;
         TextView nrGNBTextView;
         TextView nrTACTextView;
         TextView nrPCITextView;
+        TextView nrDLTextView;
+        TextView nrULTextView;
+        TextView nrCQITextView;
+        TextView nrCQIIndexTextView;
         LinearLayout strengthValuesFor5g;
 
         public CellInfoViewHolder(@NonNull View itemView) {
@@ -105,13 +116,20 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
             lteENBTextView = itemView.findViewById(R.id.tv_enb);
             lteTACTextView = itemView.findViewById(R.id.tv_lte_tac);
             ltePCITextView = itemView.findViewById(R.id.tv_lte_pci);
+            lteULTextView = itemView.findViewById(R.id.tv_lte_ul_modulation);
+            lteCQITextView = itemView.findViewById(R.id.tv_lte_cqi);
+            lteCQIIndexTextView = itemView.findViewById(R.id.tv_lte_cqi_index);
 
 
             nrNCITextView = itemView.findViewById(R.id.tv_nr_nci);
-            nrCIDTextView= itemView.findViewById(R.id.tv_nr_cid);
+            nrCIDTextView = itemView.findViewById(R.id.tv_nr_cid);
             nrGNBTextView = itemView.findViewById(R.id.tv_gnb);
             nrTACTextView = itemView.findViewById(R.id.tv_nr_tac);
             nrPCITextView = itemView.findViewById(R.id.tv_nr_pci);
+            nrULTextView = itemView.findViewById(R.id.tv_nr_ul_modulation);
+            nrDLTextView = itemView.findViewById(R.id.tv_nr_dl_modulation);
+            nrCQITextView = itemView.findViewById(R.id.tv_nr_cqi);
+            nrCQIIndexTextView = itemView.findViewById(R.id.tv_nr_cqi_index);
 
             nsaTimestampTextView = itemView.findViewById(R.id.tv_nsa_timestamp);
             nsaNetworkTypeTextView = itemView.findViewById(R.id.tv_networkType_nsa);
@@ -183,6 +201,42 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                         nrPCITextView.setText(String.valueOf(iCellWithNetworkType.getCellIdentityNr().getPci()));
                     }
 
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+
+                        if (activeSignalStrength.getCellSignalStrengthNr() != null) {
+
+                            if (activeSignalStrength.getCellSignalStrengthNr().getCsiCqiTableIndex() != UNAVAILABLE) {
+                                nrCQIIndexTextView.setText(String.valueOf(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiTableIndex()));
+                            } else {
+                                nrCQIIndexTextView.setText("UNAVAILABLE");
+                            }
+
+                            if (!activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().isEmpty()) {
+                                nrCQITextView.setText(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().toString());
+                            } else {
+                                nrCQITextView.setText("EMPTY");
+                            }
+
+                            if (!activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().isEmpty()) {
+
+                                nrDLTextView.setText(Util.get5gCqiQamMapping(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().get(0)));
+
+                                if (activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().size() > 2) {
+                                    nrULTextView.setText(Util.get5gCqiQamMapping(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().get(1)));
+                                }
+
+                            } else {
+                                nrDLTextView.setText("Empty");
+                                nrULTextView.setText("Empty");
+                            }
+                        } else {
+                            nrDLTextView.setText("N/A");
+                            nrULTextView.setText("N/A");
+                        }
+                    }
+
                 } else if (activeSignalStrength.getSsRsrp() != null || activeSignalStrength.getSsRsrq() != null || activeSignalStrength.getSsSinr() != null) {
 
                     // Populate signal strength values from the active signal if available
@@ -217,6 +271,40 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
                     } else {
                         nrPCITextView.setText("N/A");
                     }
+
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (activeSignalStrength.getCellSignalStrengthNr() != null) {
+
+                            if (activeSignalStrength.getCellSignalStrengthNr().getCsiCqiTableIndex() != UNAVAILABLE) {
+                                nrCQIIndexTextView.setText(String.valueOf(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiTableIndex()));
+                            } else {
+                                nrCQIIndexTextView.setText("UNAVAILABLE");
+                            }
+
+                            if (!activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().isEmpty()) {
+                                nrCQITextView.setText(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().toString());
+                            } else {
+                                nrCQITextView.setText("Empty");
+                            }
+
+                            if (!activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().isEmpty()) {
+
+                                nrDLTextView.setText(Util.get5gCqiQamMapping(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().get(0)));
+
+                                if (activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().size() > 2) {
+                                    nrULTextView.setText(Util.get5gCqiQamMapping(activeSignalStrength.getCellSignalStrengthNr().getCsiCqiReport().get(1)));
+                                }
+
+                            } else {
+                                nrDLTextView.setText("Empty");
+                                nrULTextView.setText("Empty");
+                            }
+                        } else {
+                            nrDLTextView.setText("N/A");
+                            nrULTextView.setText("N/A");
+                        }
+                    }
                 } else {
                     // Hide strength values if no data is available
                     strengthValuesFor5g.setVisibility(View.GONE);
@@ -234,6 +322,33 @@ public class CellInfoAdapter extends RecyclerView.Adapter<CellInfoAdapter.CellIn
 
 
             // Populate 4G LTE cell data
+            if (cellLte.getSignal().getCqi() != null && cellLte.getSignal().getCqi() != UNAVAILABLE) {
+                lteCQITextView.setText(String.valueOf(cellLte.getSignal().getCqi()));
+                lteULTextView.setText(Util.get4gCqiQamMapping(cellLte.getSignal().getCqi()));
+            } else {
+
+                if (activeSignalStrength.getCellSignalStrengthLte() != null && activeSignalStrength.getCellSignalStrengthLte().getCqi() != UNAVAILABLE) {
+                    lteCQITextView.setText(String.valueOf(activeSignalStrength.getCellSignalStrengthLte().getCqi()));
+
+                    lteULTextView.setText(Util.get4gCqiQamMapping(activeSignalStrength.getCellSignalStrengthLte().getCqi()));
+
+                } else {
+                    lteCQITextView.setText("UNAVAILABLE");
+
+                    lteULTextView.setText("N/A");
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+
+                if (activeSignalStrength.getCellSignalStrengthLte() != null && activeSignalStrength.getCellSignalStrengthLte().getCqiTableIndex() != UNAVAILABLE) {
+                    lteCQIIndexTextView.setText(String.valueOf(activeSignalStrength.getCellSignalStrengthLte().getCqiTableIndex()));
+                } else {
+                    lteCQIIndexTextView.setText("UNAVAILABLE");
+                }
+            }
+
+
             if (cellLte.getSignal().getRsrp() != null) {
                 rsrpTextView.setText(cellLte.getSignal().getRsrp().toString());
             } else if (activeSignalStrength.getSsRsrp() != null) {

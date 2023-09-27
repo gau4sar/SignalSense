@@ -1,5 +1,7 @@
 package com.example.signalsense;
 
+import android.content.ContentResolver;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.example.signalsense.data.CpuGridItem;
@@ -19,6 +21,42 @@ import java.util.regex.Pattern;
  */
 public class CpuInfo {
 
+    public static float getScreenBrightnessPercentage(ContentResolver contentResolver) {
+        int currentBrightness = getScreenBrightness(contentResolver);
+
+        float currentBrightnessPercentage = 0f;
+        if (isAutoBrightnessEnabled(contentResolver)) {
+            // Auto-brightness is enabled, so return the current brightness as a percentage of 128
+            currentBrightnessPercentage= (currentBrightness * 100.0f) / 128.0f;
+        } else {
+            // Auto-brightness is off, so return the current brightness as a percentage of 255
+            currentBrightnessPercentage= (currentBrightness * 100.0f) / 255.0f;
+        }
+
+        DecimalFormat decimalFormat = new DecimalFormat("#.##"); // Format to two decimal places
+        String formattedTemp = decimalFormat.format(currentBrightnessPercentage);
+        return Float.parseFloat(formattedTemp);
+    }
+
+
+    public static boolean isAutoBrightnessEnabled(ContentResolver contentResolver) {
+        try {
+            int mode = Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE);
+            return mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static int getScreenBrightness(ContentResolver contentResolver) {
+        try {
+            return Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
     // File path to read CPU temperature from
     private static final String CPU_TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp";
 
