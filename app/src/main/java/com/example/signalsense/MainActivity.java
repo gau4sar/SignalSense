@@ -66,6 +66,7 @@ public class MainActivity extends ComponentActivity {
     private TextView cpuUsageTextView;
     private TextView cpuTempTextView;
     private TextView numberOfCoresTextView;
+    private TextView gpuMaxFreqTextView;
     private GridView cpuFrequencyRecyclerView;
 
     // String representing the Radio Access Technology (RAT) type
@@ -87,6 +88,7 @@ public class MainActivity extends ComponentActivity {
 
         brightnessPercentageTextView =  findViewById(R.id.tv_brightness_percentage);
         ratTypeTextView = findViewById(R.id.tv_rat_type);
+        gpuMaxFreqTextView = findViewById(R.id.tv_gpu_max_freq);
         cpuUsageTextView = findViewById(R.id.tv_cpu_usage);
         cpuTempTextView = findViewById(R.id.tv_cpu_temp);
         numberOfCoresTextView = findViewById(R.id.tv_number_of_cores);
@@ -151,9 +153,11 @@ public class MainActivity extends ComponentActivity {
                 updatedItemList.add(new CpuGridItem("")); // Add an empty item
             }
 
+            int maxFreqGPU = CpuInfo.readIntegerFile("/sys/class/kgsl/kgsl-3d0/max_gpuclk")/1000000;
             // Update UI elements here
             runOnUiThread(() -> {
                 // Update UI elements related to CPU usage
+                gpuMaxFreqTextView.setText(maxFreqGPU+"Mhz");
                 String cpuUsageStr = overallCpuUsage + "%";
                 cpuUsageTextView.setText(cpuUsageStr);
                 cpuTempTextView.setText(cpu_temp);

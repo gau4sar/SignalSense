@@ -99,18 +99,9 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-
-        <GridView
-            android:id="@+id/gridView_cpu_frequency"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="2dp"
-            android:numColumns="2" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:visibility="visible">
 
             <LinearLayout
@@ -137,9 +128,31 @@
                         android:text=" "
                         android:textStyle="bold" />
 
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="   GPU Max Freq: "
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_gpu_max_freq"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" "
+                        android:textStyle="bold" />
+
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
+
+        <GridView
+            android:id="@+id/gridView_cpu_frequency"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="2dp"
+            android:visibility="visible"
+            android:numColumns="2" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

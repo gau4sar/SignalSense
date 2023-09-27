@@ -30,7 +30,7 @@ public class CpuInfo {
             currentBrightnessPercentage= (currentBrightness * 100.0f) / 128.0f;
         } else {
             // Auto-brightness is off, so return the current brightness as a percentage of 255
-            currentBrightnessPercentage= (currentBrightness * 100.0f) / 255.0f;
+            currentBrightnessPercentage= (currentBrightness * 100.0f) / 128.0f;
         }
 
         DecimalFormat decimalFormat = new DecimalFormat("#.##"); // Format to two decimal places
@@ -240,7 +240,7 @@ public class CpuInfo {
      * @param path The path to the file containing the integer value.
      * @return The integer value read from the file, or 0 if any error occurs.
      */
-    private static int readIntegerFile(String path) {
+    public static int readIntegerFile(String path) {
         int ret = 0;
         try {
             RandomAccessFile reader = new RandomAccessFile(path, "r");
