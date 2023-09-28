@@ -1,9 +1,6 @@
 package com.example.signalsense;
 
 
-import static org.lwjgl.opengl.ARBTimerQuery.GL_TIMESTAMP;
-import static org.lwjgl.opengl.ARBTimerQuery.glQueryCounter;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -29,6 +26,7 @@ import android.telephony.CellSignalStrengthNr;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,15 +46,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.signalsense.adapter.CellInfoAdapter;
 import com.example.signalsense.adapter.CpuFrequencyGridAdapter;
 import com.example.signalsense.data.CpuGridItem;
-import com.example.signalsense.utils.MyRenderer;
+import com.example.signalsense.utils.TriangleRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ComponentActivity {
+public class MainActivity extends ComponentActivity implements TriangleRenderer.GpuUsageListenerInterface {
+
+    @Override
+    public void onGpuUsageChange(double newValue) {
+        // This method will be called whenever helloYou changes
+        // You can update your UI or perform any other actions here.
+        Log.d("MainActivity", "helloYou changed to: " + newValue);
+        gpuUsage = newValue;
+    }
 
     private GLSurfaceView glSurfaceView;
+    private double gpuUsage = 0.0;
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
     private ActiveSignalStrength activeSignalStrength = null;
     private int secondsCount = 0;
@@ -68,6 +75,7 @@ public class MainActivity extends ComponentActivity {
 
     // UI TextViews
     private TextView ratTypeTextView;
+    private TextView gpuUsageTextView;
     private TextView brightnessPercentageTextView;
     private TextView cpuUsageTextView;
     private TextView cpuTempTextView;
@@ -85,16 +93,23 @@ public class MainActivity extends ComponentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        TriangleRenderer renderer;
 
-        // Find the GLSurfaceView from the layout
-        glSurfaceView = findViewById(R.id.glSurfaceView);
+// Find the container view by its ID
+        FrameLayout container = findViewById(R.id.container);
 
-        // Create an instance of your custom renderer
-        MyRenderer renderer = new MyRenderer();
+// Create and configure the GLSurfaceView
+        GLSurfaceView glSurfaceView = new GLSurfaceView(this);
+        glSurfaceView.setEGLContextClientVersion(3); // OpenGL ES version (e.g., 3.0)
 
-        // Set the renderer for the GLSurfaceView
-        glSurfaceView.setEGLContextClientVersion(3); // Use OpenGL ES 3.0
+        renderer = new TriangleRenderer(); // Create a TwoDRenderer instance
+
+        renderer.gpuUsageListener(this);
+
         glSurfaceView.setRenderer(renderer);
+
+// Add the GLSurfaceView to the container
+        container.addView(glSurfaceView);
 
 
         executorService = Executors.newScheduledThreadPool(2);
@@ -103,6 +118,7 @@ public class MainActivity extends ComponentActivity {
         cpuFrequencyRecyclerView = findViewById(R.id.gridView_cpu_frequency);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
+        gpuUsageTextView = findViewById(R.id.tv_gpu_usage);
         brightnessPercentageTextView =  findViewById(R.id.tv_brightness_percentage);
         ratTypeTextView = findViewById(R.id.tv_rat_type);
         cpuUsageTextView = findViewById(R.id.tv_cpu_usage);
@@ -139,6 +155,7 @@ public class MainActivity extends ComponentActivity {
             Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
             // Update UI elements here
             runOnUiThread(() -> {
+                gpuUsageTextView.setText(gpuUsage+"%");
                 brightnessPercentageTextView.setText(brightnessPercentage+"%");
                 // Update UI elements related to cell info
                 ratTypeTextView.setText(ratTypeString);
