@@ -21,21 +21,19 @@ import java.util.regex.Pattern;
  */
 public class CpuInfo {
 
-    public static float getScreenBrightnessPercentage(ContentResolver contentResolver) {
+    public static int getScreenBrightnessPercentage(ContentResolver contentResolver) {
         int currentBrightness = getScreenBrightness(contentResolver);
 
         float currentBrightnessPercentage = 0f;
         if (isAutoBrightnessEnabled(contentResolver)) {
-            // Auto-brightness is enabled, so return the current brightness as a percentage of 128
-            currentBrightnessPercentage= (currentBrightness * 100.0f) / 128.0f;
+            // Auto-brightness is enabled, so return the current brightness as a percentage of 255
+            currentBrightnessPercentage= (currentBrightness * 100.0f) / 255.0f;
         } else {
-            // Auto-brightness is off, so return the current brightness as a percentage of 255
+            // Auto-brightness is off, so return the current brightness as a percentage of 128
             currentBrightnessPercentage= (currentBrightness * 100.0f) / 128.0f;
         }
 
-        DecimalFormat decimalFormat = new DecimalFormat("#.##"); // Format to two decimal places
-        String formattedTemp = decimalFormat.format(currentBrightnessPercentage);
-        return Float.parseFloat(formattedTemp);
+        return Math.round(currentBrightnessPercentage);
     }
 
 
@@ -57,6 +55,7 @@ public class CpuInfo {
             return -1;
         }
     }
+
     // File path to read CPU temperature from
     private static final String CPU_TEMP_FILE = "/sys/class/thermal/thermal_zone0/temp";
 
