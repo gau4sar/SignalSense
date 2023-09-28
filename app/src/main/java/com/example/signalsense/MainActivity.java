@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +26,7 @@ import android.telephony.CellSignalStrengthNr;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,12 +46,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.signalsense.adapter.CellInfoAdapter;
 import com.example.signalsense.adapter.CpuFrequencyGridAdapter;
 import com.example.signalsense.data.CpuGridItem;
+import com.example.signalsense.utils.gpu_info.TriangleRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ComponentActivity {
+public class MainActivity extends ComponentActivity implements TriangleRenderer.GpuUsageListenerInterface {
+
+    private double gpuUsage = 0.0;
 
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
     private ActiveSignalStrength activeSignalStrength = null;
@@ -61,6 +66,7 @@ public class MainActivity extends ComponentActivity {
     private CpuFrequencyGridAdapter cpuFrequencyGridAdapter;
 
     // UI TextViews
+    private TextView gpuUsageTextView;
     private TextView ratTypeTextView;
     private TextView brightnessPercentageTextView;
     private TextView cpuUsageTextView;
@@ -80,12 +86,31 @@ public class MainActivity extends ComponentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        TriangleRenderer renderer;
+
+// Find the container view by its ID
+        FrameLayout container = findViewById(R.id.container);
+
+// Create and configure the GLSurfaceView
+        GLSurfaceView glSurfaceView = new GLSurfaceView(this);
+        glSurfaceView.setEGLContextClientVersion(3); // OpenGL ES version (e.g., 3.0)
+
+        renderer = new TriangleRenderer(); // Create a TwoDRenderer instance
+
+        renderer.gpuUsageListener(this);
+
+        glSurfaceView.setRenderer(renderer);
+
+// Add the GLSurfaceView to the container
+        container.addView(glSurfaceView);
+
         executorService = Executors.newScheduledThreadPool(2);
 
         // Initialize UI TextViews
         cpuFrequencyRecyclerView = findViewById(R.id.gridView_cpu_frequency);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
+        gpuUsageTextView = findViewById(R.id.tv_gpu_usage);
         brightnessPercentageTextView =  findViewById(R.id.tv_brightness_percentage);
         ratTypeTextView = findViewById(R.id.tv_rat_type);
         gpuMaxFreqTextView = findViewById(R.id.tv_gpu_max_freq);
@@ -116,13 +141,14 @@ public class MainActivity extends ComponentActivity {
     private void scheduleTasks() {
         executorService.scheduleAtFixedRate(() -> {
 
-            float brightnessPercentage = CpuInfo.getScreenBrightnessPercentage(getContentResolver());
+            int brightnessPercentage = CpuInfo.getScreenBrightnessPercentage(getContentResolver());
 
             // Populate cell info (replace with your logic)
             populateCellList();
             Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
             // Update UI elements here
             runOnUiThread(() -> {
+                gpuUsageTextView.setText(gpuUsage+"%");
                 brightnessPercentageTextView.setText(brightnessPercentage+"%");
                 // Update UI elements related to cell info
                 ratTypeTextView.setText(ratTypeString);
@@ -505,4 +531,13 @@ public class MainActivity extends ComponentActivity {
             executorService.shutdownNow();
         }
     }
+
+    @Override
+    public void onGpuUsageChange(double newValue) {
+        // This method will be called whenever helloYou changes
+        // You can update your UI or perform any other actions here.
+        Log.d("MainActivity", "helloYou changed to: " + newValue);
+        gpuUsage = newValue;
+    }
+
 }
