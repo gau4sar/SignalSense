@@ -73,7 +73,6 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
     private TextView cpuTempTextView;
     private TextView numberOfCoresTextView;
     private TextView gpuMaxFreqTextView;
-    private GridView cpuFrequencyRecyclerView;
 
     // String representing the Radio Access Technology (RAT) type
     private String ratTypeString = "";
@@ -107,7 +106,7 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
         executorService = Executors.newScheduledThreadPool(2);
 
         // Initialize UI TextViews
-        cpuFrequencyRecyclerView = findViewById(R.id.gridView_cpu_frequency);
+        GridView cpuFrequencyRecyclerView = findViewById(R.id.gridView_cpu_frequency);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
         gpuUsageTextView = findViewById(R.id.tv_gpu_usage);
@@ -299,7 +298,6 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
 
             // Create lists to store registered cell information.
             List<CellInfo> registeredCells = new ArrayList<>();
-            List<Integer> registeredCellIds = new ArrayList<>();
             List<RegisteredCellIdWithAlphaLongAndNCI> registeredCellIdWithAlphaLongAndNCIList = new ArrayList<>();
 
 
@@ -338,9 +336,6 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
                     }
                 }
 
-
-
-                Log.d("SignalSenseLog", "registerdcellids =>  " + registeredCellIds);
             }
 
             for (CellInfo info : cellInfoList) {
