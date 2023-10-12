@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
-import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,11 +25,14 @@ import android.telephony.CellSignalStrengthNr;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,15 +48,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.signalsense.adapter.CellInfoAdapter;
 import com.example.signalsense.adapter.CpuFrequencyGridAdapter;
 import com.example.signalsense.data.CpuGridItem;
-import com.example.signalsense.utils.gpu_info.TriangleRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends ComponentActivity implements TriangleRenderer.GpuUsageListenerInterface {
-
-    private double gpuUsage = 0.0;
+public class MainActivity extends ComponentActivity {
 
     private List<ICellWithNetworkType> iCellWithNetworkTypeList = new ArrayList<>();
     private ActiveSignalStrength activeSignalStrength = null;
@@ -85,24 +84,6 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        TriangleRenderer renderer;
-
-// Find the container view by its ID
-        FrameLayout container = findViewById(R.id.container);
-
-// Create and configure the GLSurfaceView
-        GLSurfaceView glSurfaceView = new GLSurfaceView(this);
-        glSurfaceView.setEGLContextClientVersion(3); // OpenGL ES version (e.g., 3.0)
-
-        renderer = new TriangleRenderer(); // Create a TwoDRenderer instance
-
-        renderer.gpuUsageListener(this);
-
-        glSurfaceView.setRenderer(renderer);
-
-// Add the GLSurfaceView to the container
-        container.addView(glSurfaceView);
-
         executorService = Executors.newScheduledThreadPool(2);
 
         // Initialize UI TextViews
@@ -110,7 +91,7 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
         gpuUsageTextView = findViewById(R.id.tv_gpu_usage);
-        brightnessPercentageTextView =  findViewById(R.id.tv_brightness_percentage);
+        brightnessPercentageTextView = findViewById(R.id.tv_brightness_percentage);
         ratTypeTextView = findViewById(R.id.tv_rat_type);
         gpuMaxFreqTextView = findViewById(R.id.tv_gpu_max_freq);
         cpuUsageTextView = findViewById(R.id.tv_cpu_usage);
@@ -138,7 +119,18 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
 
     // Schedule cell info population and CPU usage tasks
     private void scheduleTasks() {
+
         executorService.scheduleAtFixedRate(() -> {
+
+            int maxFreqGPUHz = CpuInfo.readIntegerFile("/sys/class/kgsl/kgsl-3d0/max_gpuclk");
+            int maxFreqGPUMHz = CpuInfo.readIntegerFile("/sys/class/kgsl/kgsl-3d0/max_gpuclk") / 1000000;
+            int gpuUsageHz = CpuInfo.getGpuUsage(this);
+
+            float gpuUsage = (float)gpuUsageHz * 100 / maxFreqGPUHz;
+
+            Log.d("SignalSenseLog", "getGpuUsage maxFreqGPUHz->" + maxFreqGPUHz);
+            Log.d("SignalSenseLog", "getGpuUsage gpuUsageHz->" + gpuUsageHz);
+            Log.d("SignalSenseLog", "getGpuUsage gpuUsage->" + gpuUsage);
 
             int brightnessPercentage = CpuInfo.getScreenBrightnessPercentage(getContentResolver());
 
@@ -147,8 +139,10 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
             Log.d("SignalSenseLog", "runEvery1Second 4 seconds->" + ++secondsCount);
             // Update UI elements here
             runOnUiThread(() -> {
-                gpuUsageTextView.setText(gpuUsage+"%");
-                brightnessPercentageTextView.setText(brightnessPercentage+"%");
+                gpuMaxFreqTextView.setText(maxFreqGPUMHz + "Mhz");
+
+                gpuUsageTextView.setText(gpuUsageHz + "%");
+                brightnessPercentageTextView.setText(brightnessPercentage + "%");
                 // Update UI elements related to cell info
                 ratTypeTextView.setText(ratTypeString);
                 cellInfoAdapter.setData(iCellWithNetworkTypeList, activeSignalStrength);
@@ -157,7 +151,6 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
         }, 0, PERIOD_MILLIS, TimeUnit.MILLISECONDS);
 
         executorService.scheduleAtFixedRate(() -> {
-
             // Calculate CPU usage
             CpuInfo.CoreUsageResult coreUsageResult = CpuInfo.getEachAndTotalCoreUsage();
             int overallCpuUsage = coreUsageResult.getOverallCpuUsage();
@@ -178,11 +171,9 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
                 updatedItemList.add(new CpuGridItem("")); // Add an empty item
             }
 
-            int maxFreqGPU = CpuInfo.readIntegerFile("/sys/class/kgsl/kgsl-3d0/max_gpuclk")/1000000;
             // Update UI elements here
             runOnUiThread(() -> {
                 // Update UI elements related to CPU usage
-                gpuMaxFreqTextView.setText(maxFreqGPU+"Mhz");
                 String cpuUsageStr = overallCpuUsage + "%";
                 cpuUsageTextView.setText(cpuUsageStr);
                 cpuTempTextView.setText(cpu_temp);
@@ -288,12 +279,12 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
                         defaultSnrValue = null;
                     }
 
-                    cellSignalStrengthLte=lteSignalStrength;
+                    cellSignalStrengthLte = lteSignalStrength;
                 }
             }
 
             // Create an instance of ActiveSignalStrength with extracted values.
-            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue, defaultRsrpValue, defaultRsrqValue, defaultSnrValue, defaultSSRsrpValue, defaultSSrsrqValue, defaultSSSnrValue,cellSignalStrengthNr,cellSignalStrengthLte);
+            activeSignalStrength = new ActiveSignalStrength(defaultRssiValue, defaultRsrpValue, defaultRsrqValue, defaultSnrValue, defaultSSRsrpValue, defaultSSrsrqValue, defaultSSSnrValue, cellSignalStrengthNr, cellSignalStrengthLte);
 
 
             // Create lists to store registered cell information.
@@ -506,9 +497,7 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
             executorService = Executors.newScheduledThreadPool(2);
             scheduleTasks(); // Start scheduling tasks
         }
-
     }
-
 
     @Override
     protected void onPause() {
@@ -526,13 +515,4 @@ public class MainActivity extends ComponentActivity implements TriangleRenderer.
             executorService.shutdownNow();
         }
     }
-
-    @Override
-    public void onGpuUsageChange(double newValue) {
-        // This method will be called whenever helloYou changes
-        // You can update your UI or perform any other actions here.
-        Log.d("MainActivity", "helloYou changed to: " + newValue);
-        gpuUsage = newValue;
-    }
-
 }

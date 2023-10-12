@@ -1,10 +1,13 @@
 package com.example.signalsense;
 
 import android.content.ContentResolver;
+import android.content.Context;
 import android.provider.Settings;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.signalsense.data.CpuGridItem;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -27,10 +30,10 @@ public class CpuInfo {
         float currentBrightnessPercentage = 0f;
         if (isAutoBrightnessEnabled(contentResolver)) {
             // Auto-brightness is enabled, so return the current brightness as a percentage of 255
-            currentBrightnessPercentage= (currentBrightness * 100.0f) / 255.0f;
+            currentBrightnessPercentage = (currentBrightness * 100.0f) / 255.0f;
         } else {
             // Auto-brightness is off, so return the current brightness as a percentage of 128
-            currentBrightnessPercentage= (currentBrightness * 100.0f) / 128.0f;
+            currentBrightnessPercentage = (currentBrightness * 100.0f) / 128.0f;
         }
 
         return Math.round(currentBrightnessPercentage);
@@ -133,7 +136,7 @@ public class CpuInfo {
      * Retrieves the current usage of each CPU core and calculates the total CPU usage.
      *
      * @return A CoreUsageResult object containing the overall CPU usage as well as a list
-     *         of CpuGridItem objects representing the usage of individual CPU cores.
+     * of CpuGridItem objects representing the usage of individual CPU cores.
      */
     public static synchronized CoreUsageResult getEachAndTotalCoreUsage() {
         initCoresFreq();
@@ -150,7 +153,7 @@ public class CpuInfo {
             coresUsage[0] += coresUsage[i + 1];
 
             // Add CpuGridItem to the list
-            cpuGridItems.add(new CpuGridItem("CPU" + i + ": "+ currentUsage+"%"));
+            cpuGridItems.add(new CpuGridItem("CPU" + i + ": " + currentUsage + "%"));
         }
 
         if (mCoresFreq.size() > 0)
@@ -253,6 +256,52 @@ public class CpuInfo {
             ex.printStackTrace();
         }
         return ret;
+    }
+
+
+    public static int getGpuUsage(Context context) {
+        BufferedReader bufferedReader1;
+        File gpuBusy = new File("/sys/class/kgsl/kgsl-3d0/gpubusy");
+
+        try {
+            bufferedReader1 = new BufferedReader(new FileReader(gpuBusy));
+            // Read and process data from gpuclkFile
+            String line;
+            while ((line = bufferedReader1.readLine()) != null) {
+                // Remove leading and trailing spaces
+                line = line.trim();
+
+                Log.d("GpuUsage", "Value from gpuclkFile:" + line);
+                // Process the line as needed
+
+                try {
+                    // Attempt to parse the first value as an integer
+                    String[] split = line.split(" ");
+                    Log.d("GpuUsage", "getGpuUsage split text -" + split[1] + "-");
+
+
+                    int gpuUsagePercentage = Integer.parseInt(split[0]) * 100 / Integer.parseInt(split[1]);
+                    Log.d("GpuUsage", "gpuUsagePercentage -" + gpuUsagePercentage + "-");
+
+                    Log.d("GpuUsage", "getGpuUsage split text -" + split[1] + "-");
+
+                    return gpuUsagePercentage;
+                    //break; // Exit the loop after successfully extracting the first value
+                } catch (NumberFormatException e) {
+                    // Handle the case where parsing fails
+                    Log.e("GpuUsageee", "Failed to parse the first value: " + e);
+                    return 0;
+                }
+            }
+
+        } catch (IOException e) {
+
+            Log.d("GpuUsageee", "IOException " + e);
+            Toast.makeText(context, "IOException " + e, Toast.LENGTH_LONG).show();
+
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     /**
